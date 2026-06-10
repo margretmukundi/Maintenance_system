@@ -1136,7 +1136,7 @@ async function handleAllRequests(req, res) {
        WHERE ${where}
        ORDER BY FIELD(mr.priority,'high','med','low'), mr.created_at DESC
        LIMIT ? OFFSET ?`,
-      [...params, parseInt(per_page), offset]
+      [...params, Number(per_page), Number(offset)]
     );
 
     return ok(res, {
@@ -1276,20 +1276,21 @@ async function handleExportCSV(req, res) {
       params.push(q, q, q);
     }
 
-    const [rows] = await conn.execute(
-      `SELECT mr.id AS ID, u.name AS Requester, u.department AS Department,
-              u.floor_office AS 'Floor/Office', u.email AS Email,
-              mr.item_name AS Item, mr.request_type AS Type,
-              mr.quantity AS Quantity, mr.priority AS Priority,
-              mr.status AS Status, mr.issue_description AS 'Issue',
-              mr.asset_tag AS 'Asset Tag', mr.required_by AS 'Required By',
-              mr.preferred_date AS 'Preferred Date',
-              mr.notes AS Notes, mr.admin_notes AS 'Admin Notes',
-              mr.created_at AS Submitted
-       FROM maintenance_requests mr JOIN users u ON u.id = mr.user_id
-       WHERE ${conditions.join(' AND ')} ORDER BY mr.created_at DESC`,
-      params
-    );
+  const [rows] = await conn.execute(
+  `SELECT mr.id, mr.request_type, mr.item_name, mr.quantity, mr.required_by,
+          mr.asset_tag, mr.issue_description, mr.preferred_date,
+          mr.priority, mr.status, mr.notes, mr.admin_notes,
+          mr.photo_path,
+          DATE_FORMAT(mr.created_at, '%d %b %Y %H:%i') AS created_at,
+          DATE_FORMAT(mr.updated_at, '%d %b %Y %H:%i') AS updated_at,
+          u.id AS user_id, u.name AS requester_name, u.department,
+          u.floor_office, u.email AS requester_email, u.designation
+   FROM maintenance_requests mr JOIN users u ON u.id = mr.user_id
+   WHERE ${where}
+   ORDER BY FIELD(mr.priority,'high','med','low'), mr.created_at DESC
+   LIMIT ${parseInt(per_page)} OFFSET ${parseInt(offset)}`, // <-- Injected cleanly here
+  params // <-- Send only the search parameters here
+);
 
     const headers  = rows.length ? Object.keys(rows[0]) : ['No data'];
     const csv = [
