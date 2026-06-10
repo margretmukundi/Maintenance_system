@@ -427,7 +427,8 @@ async function route(req, res) {
         return err(res, `Unknown action: "${action}"`, 404);
     }
   } catch (e) {
-    console.error(`[ERROR] action=${action}:`, e.message);
+    console.error(`[ERROR] action=${action}:`);
+    console.error(e);
     return err(res, 'Server error: ' + e.message, 500);
   }
 }
@@ -1116,7 +1117,9 @@ async function handleAllRequests(req, res) {
     }
 
     const where  = conditions.join(' AND ');
-    const offset = (parseInt(page) - 1) * parseInt(per_page);
+    const pageNum    = Math.max(1, parseInt(page)     || 1);
+    const perPageNum = Math.max(1, parseInt(per_page) || 20);
+    const offset     = (pageNum - 1) * perPageNum;
 
     const [[{ total }]] = await conn.execute(
       `SELECT COUNT(*) AS total FROM maintenance_requests mr JOIN users u ON u.id = mr.user_id WHERE ${where}`,
@@ -1136,17 +1139,17 @@ async function handleAllRequests(req, res) {
        WHERE ${where}
        ORDER BY FIELD(mr.priority,'high','med','low'), mr.created_at DESC
        LIMIT ? OFFSET ?`,
-      [...params, Number(per_page), Number(offset)]
+      [...params, perPageNum, offset]
     );
 
     return ok(res, {
       requests: rows,
       pagination: {
-        total:    parseInt(total),
-        page:     parseInt(page),
-        per_page: parseInt(per_page),
-        pages:    Math.max(1, Math.ceil(total / per_page)),
-      }
+        total: parseInt(total),
+        page: pageNum,
+        per_page: perPageNum,
+        pages: Math.max(1, Math.ceil(total / perPageNum)),
+}
     });
   } finally { conn.release(); }
 }
