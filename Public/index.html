@@ -1,0 +1,1749 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Assembly Maintenance System</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f5f0;--card:#ffffff;--border:#e2ddd6;--text:#1a1814;--muted:#6b6560;
+  --accent:#2d5a8e;--accent-light:#e8f0f9;--accent2:#c47a2d;
+  --danger:#b03030;--success:#2d7a4f;--success-bg:#e8f5ee;
+  --shadow:0 2px 12px rgba(0,0,0,0.07);--radius:10px;
+}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.page{display:none;min-height:100vh}
+.page.active{display:flex}
+
+/* LOGIN PAGES */
+#loginPage{background:linear-gradient(135deg,#1a2f4a 0%,#2d5a8e 50%,#1a3a5c 100%);align-items:center;justify-content:center;flex-direction:column}
+#adminLoginPage{background:linear-gradient(135deg,#0d1f30 0%,#1a2f4a 50%,#0d1a26 100%);align-items:center;justify-content:center;flex-direction:column}
+#adminLoginPage .login-wrap{border-top:4px solid #c47a2d}
+#verifyPage{background:linear-gradient(135deg,#1a2f4a 0%,#2d5a8e 50%,#1a3a5c 100%);align-items:center;justify-content:center;flex-direction:column}
+.login-wrap{background:#fff;border-radius:16px;padding:2.5rem 2rem;width:min(480px,94vw);box-shadow:0 20px 60px rgba(0,0,0,0.25)}
+.login-logo{text-align:center;margin-bottom:1.5rem}
+.login-logo h1{font-family:'DM Serif Display',serif;font-size:1.6rem;color:#1a2f4a;line-height:1.2}
+.login-logo p{font-size:.82rem;color:#6b6560;margin-top:.3rem;letter-spacing:.04em;text-transform:uppercase}
+.logo-icon{width:52px;height:52px;background:#1a2f4a;border-radius:12px;margin:0 auto .8rem;display:flex;align-items:center;justify-content:center}
+.badge-row{display:flex;gap:6px;justify-content:center;margin:.8rem 0 1.5rem;flex-wrap:wrap}
+.badge{font-size:.7rem;padding:3px 10px;border-radius:20px;font-weight:500}
+.badge.blue{background:#e8f0f9;color:#2d5a8e}
+.badge.amber{background:#fdf3e3;color:#c47a2d}
+.badge.admin-badge{background:#1a2f4a;color:#fff}
+.form-grid{display:grid;gap:.8rem}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+.field label{display:block;font-size:.75rem;font-weight:500;color:#6b6560;letter-spacing:.05em;text-transform:uppercase;margin-bottom:.35rem}
+.field input,.field select{width:100%;padding:.55rem .75rem;border:1.5px solid #e2ddd6;border-radius:8px;font-size:.9rem;font-family:'DM Sans',sans-serif;background:#fafaf8;color:#1a1814;transition:border .15s,background .15s;outline:none}
+.field input:focus,.field select:focus{border-color:#2d5a8e;background:#fff}
+.btn-primary{width:100%;padding:.7rem;background:#2d5a8e;color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:.5rem;transition:background .15s,transform .1s}
+.btn-primary:hover{background:#1a3a5c}
+.btn-primary:active{transform:scale(.99)}
+.btn-secondary{width:100%;padding:.65rem;background:transparent;color:#6b6560;border:1.5px solid #e2ddd6;border-radius:8px;font-size:.85rem;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;margin-top:.4rem;transition:all .15s}
+.btn-secondary:hover{border-color:#1a2f4a;color:#1a2f4a;background:#f0f4f8}
+.err-msg{font-size:.8rem;color:#b03030;text-align:center;min-height:1rem;margin-top:.3rem}
+.ok-msg{font-size:.8rem;color:#2d7a4f;text-align:center;min-height:1rem;margin-top:.3rem}
+.divider{display:flex;align-items:center;gap:.7rem;margin:.8rem 0}
+.divider::before,.divider::after{content:'';flex:1;height:1px;background:#e2ddd6}
+.divider span{font-size:.7rem;color:#a0a09a;white-space:nowrap;letter-spacing:.04em}
+
+/* PASSWORD STRENGTH METER */
+.pw-strength-wrap{margin-top:.4rem}
+.pw-bar-row{display:flex;gap:3px;margin-bottom:.35rem}
+.pw-seg{flex:1;height:4px;border-radius:2px;background:#e2ddd6;transition:background .2s}
+.pw-seg.s1{background:#b03030}.pw-seg.s2{background:#c47a2d}.pw-seg.s3{background:#c4a02d}.pw-seg.s4{background:#2d7a4f}
+.pw-rules{display:grid;grid-template-columns:1fr 1fr;gap:.15rem .5rem}
+.pw-rule{font-size:.7rem;color:#a0a09a;display:flex;align-items:center;gap:.3rem}
+.pw-rule.met{color:#2d7a4f}
+.pw-rule::before{content:'○'}
+.pw-rule.met::before{content:'●'}
+
+/* OTP VERIFY */
+.otp-row{display:flex;gap:.5rem;justify-content:center;margin:1rem 0}
+.otp-input{width:44px;height:52px;text-align:center;font-size:1.3rem;font-weight:600;border:2px solid #e2ddd6;border-radius:8px;background:#fafaf8;font-family:'DM Sans',sans-serif;outline:none;color:#1a2f4a;transition:border .15s}
+.otp-input:focus{border-color:#2d5a8e;background:#fff}
+
+/* TOAST */
+#toastContainer{position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;display:flex;flex-direction:column;gap:.5rem;pointer-events:none}
+.toast{background:#1a2f4a;color:#fff;padding:.75rem 1.1rem;border-radius:10px;font-size:.83rem;max-width:340px;box-shadow:0 4px 20px rgba(0,0,0,.2);display:flex;align-items:flex-start;gap:.6rem;pointer-events:auto;animation:toastIn .25s ease;border-left:3px solid #c47a2d}
+.toast.toast-success{border-left-color:#2d7a4f}
+.toast.toast-info{border-left-color:#2d5a8e}
+.toast-close{background:none;border:none;color:rgba(255,255,255,.5);cursor:pointer;font-size:.9rem;margin-left:auto;padding:0;line-height:1;flex-shrink:0}
+.toast-close:hover{color:#fff}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+
+/* APP SHELL */
+#appPage{flex-direction:column;background:var(--bg)}
+.topbar{background:#1a2f4a;color:#fff;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem}
+.topbar-left h2{font-family:'DM Serif Display',serif;font-size:1.15rem}
+.topbar-left p{font-size:.72rem;color:#a0b4c8;letter-spacing:.04em;text-transform:uppercase;margin-top:.1rem}
+.topbar-right{display:flex;align-items:center;gap:.75rem}
+.user-chip{background:rgba(255,255,255,.12);border-radius:20px;padding:.3rem .9rem .3rem .5rem;display:flex;align-items:center;gap:.5rem;font-size:.82rem}
+.avatar{width:28px;height:28px;border-radius:50%;background:#c47a2d;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:600;color:#fff;text-transform:uppercase;flex-shrink:0}
+.btn-logout{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);color:#fff;font-family:'DM Sans',sans-serif;font-size:.78rem;padding:.3rem .75rem;border-radius:6px;cursor:pointer;transition:background .15s}
+.btn-logout:hover{background:rgba(255,255,255,.2)}
+.main-wrap{padding:1.25rem;max-width:900px;margin:0 auto;width:100%;flex:1}
+
+/* ADMIN SHELL */
+#adminPage{flex-direction:column;background:#f0f2f5}
+.admin-topbar{background:#0d1f30;color:#fff;padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-shrink:0}
+.admin-topbar h2{font-family:'DM Serif Display',serif;font-size:1.1rem;display:flex;align-items:center;gap:.5rem}
+.admin-topbar p{font-size:.7rem;color:#a0b4c8;letter-spacing:.04em;text-transform:uppercase}
+.admin-badge-pill{background:#c47a2d;color:#fff;font-size:.65rem;font-weight:700;padding:2px 8px;border-radius:20px;letter-spacing:.05em;text-transform:uppercase}
+.admin-layout{display:flex;flex:1;min-height:0}
+.admin-sidebar{width:200px;background:#1a2f4a;padding:.75rem 0;flex-shrink:0;display:flex;flex-direction:column}
+.admin-nav-item{display:flex;align-items:center;gap:.6rem;padding:.6rem 1.2rem;font-size:.82rem;color:#a0b4c8;cursor:pointer;transition:all .15s;border-left:3px solid transparent;font-weight:500;position:relative}
+.admin-nav-item:hover{color:#fff;background:rgba(255,255,255,.07)}
+.admin-nav-item.active{color:#fff;background:rgba(255,255,255,.1);border-left-color:#c47a2d}
+.admin-nav-item .nav-icon{font-size:1rem;width:20px;text-align:center}
+.nav-badge{position:absolute;right:.7rem;top:50%;transform:translateY(-50%);background:#b03030;color:#fff;font-size:.6rem;font-weight:700;padding:1px 5px;border-radius:10px;min-width:16px;text-align:center}
+.admin-content{flex:1;overflow-y:auto;padding:1.25rem}
+
+/* TABS */
+.tabs{display:flex;gap:.4rem;margin-bottom:1.25rem;background:#fff;border-radius:10px;padding:.35rem;border:1px solid var(--border)}
+.tab{flex:1;padding:.55rem;text-align:center;font-size:.82rem;font-weight:500;border-radius:7px;cursor:pointer;border:none;background:transparent;font-family:'DM Sans',sans-serif;color:var(--muted);transition:background .15s,color .15s}
+.tab.active{background:#2d5a8e;color:#fff}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* SUB-TABS (Settings) */
+.sub-tabs{display:flex;gap:.3rem;margin-bottom:1rem;border-bottom:1px solid var(--border)}
+.sub-tab{padding:.45rem .9rem;font-size:.82rem;font-weight:500;color:var(--muted);cursor:pointer;border:none;background:none;font-family:'DM Sans',sans-serif;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.sub-tab.active{color:#2d5a8e;border-bottom-color:#2d5a8e}
+.sub-tab-content{display:none}
+.sub-tab-content.active{display:block}
+
+/* CARDS */
+.card{background:var(--card);border-radius:var(--radius);border:1px solid var(--border);padding:1.25rem;box-shadow:var(--shadow);margin-bottom:1rem}
+.card-title{font-size:.95rem;font-weight:600;color:#1a2f4a;margin-bottom:1rem;display:flex;align-items:center;gap:.5rem}
+.section-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:.9rem}
+.icon-new{background:#e8f0f9}.icon-rep{background:#fdf3e3}
+
+/* STAT CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.75rem;margin-bottom:1.25rem}
+.stat-card{background:#fff;border-radius:10px;border:1px solid #e2ddd6;padding:1rem 1.1rem;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.stat-card .stat-label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#6b6560;font-weight:500;margin-bottom:.3rem}
+.stat-card .stat-val{font-size:1.8rem;font-weight:700;line-height:1}
+.stat-pending .stat-val{color:#c47a2d}.stat-approved .stat-val{color:#2d5a8e}
+.stat-inprogress .stat-val{color:#5a4db5}.stat-completed .stat-val{color:#2d7a4f}
+.stat-rejected .stat-val{color:#b03030}.stat-total .stat-val{color:#1a2f4a}
+
+/* ITEM GRID */
+.item-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.6rem;margin-bottom:1rem}
+.item-card{border:2px solid var(--border);border-radius:8px;padding:.7rem .6rem;cursor:pointer;text-align:center;transition:border .15s,background .15s;font-size:.8rem;font-weight:500;color:var(--muted);background:#fafaf8;user-select:none}
+.item-card:hover{border-color:#2d5a8e;color:#2d5a8e;background:#e8f0f9}
+.item-card.selected{border-color:#2d5a8e;background:#e8f0f9;color:#2d5a8e}
+.item-icon{font-size:1.4rem;margin-bottom:.35rem}
+
+/* REPAIR LIST */
+.repair-list{display:grid;gap:.5rem;margin-bottom:1rem}
+.repair-item{display:flex;align-items:center;gap:.75rem;padding:.7rem;border:1.5px solid var(--border);border-radius:8px;cursor:pointer;transition:border .15s,background .15s;background:#fafaf8}
+.repair-item:hover{border-color:#c47a2d;background:#fdf3e3}
+.repair-item.selected{border-color:#c47a2d;background:#fdf3e3}
+.repair-item span{font-size:.85rem;font-weight:500;flex:1;color:var(--text)}
+.repair-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.75rem;color:transparent}
+.repair-item.selected .repair-check{background:#c47a2d;border-color:#c47a2d;color:#fff}
+
+/* REPAIR ITEM CARDS (per-item expanded form) */
+.repair-card{border:1.5px solid #e8c07a;border-radius:10px;padding:1rem;background:#fffdf8;margin-bottom:.75rem}
+.repair-card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.repair-card-title{font-size:.88rem;font-weight:600;color:#7a4a0d;display:flex;align-items:center;gap:.5rem}
+.btn-remove-item{background:none;border:none;cursor:pointer;color:#b03030;font-size:.85rem;padding:.2rem .4rem;border-radius:5px;transition:background .12s;font-family:'DM Sans',sans-serif}
+.btn-remove-item:hover{background:#fdeaea}
+
+/* PHOTO UPLOAD */
+.photo-upload-area{border:2px dashed #e2ddd6;border-radius:8px;padding:.75rem 1rem;cursor:pointer;text-align:center;font-size:.8rem;color:#a0a09a;transition:border .15s,background .15s;position:relative;overflow:hidden}
+.photo-upload-area:hover{border-color:#c47a2d;background:#fdf8f0;color:#c47a2d}
+.photo-upload-area input[type="file"]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.photo-thumb{width:100%;max-height:120px;object-fit:cover;border-radius:6px;margin-top:.4rem;display:none}
+
+/* FORMS */
+.form-section{display:grid;gap:.7rem}
+.form-two{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+textarea{width:100%;padding:.6rem .75rem;border:1.5px solid var(--border);border-radius:8px;font-size:.9rem;font-family:'DM Sans',sans-serif;background:#fafaf8;color:#1a1814;resize:vertical;min-height:70px;outline:none;transition:border .15s}
+textarea:focus{border-color:#c47a2d;background:#fff}
+
+/* PRIORITY */
+.priority-row{display:flex;align-items:center;gap:1rem;margin-bottom:.7rem}
+.priority-row label{font-size:.78rem;font-weight:500;color:#6b6560;white-space:nowrap}
+.priority-btns{display:flex;gap:.4rem}
+.prio-btn{padding:.35rem .8rem;border:1.5px solid var(--border);border-radius:6px;font-size:.75rem;font-weight:500;cursor:pointer;background:#fafaf8;font-family:'DM Sans',sans-serif;color:var(--muted);transition:all .12s}
+.prio-btn.active.low{background:#e8f5ee;border-color:#9fd6b5;color:#2d7a4f}
+.prio-btn.active.med{background:#fdf3e3;border-color:#f5c97a;color:#c47a2d}
+.prio-btn.active.high{background:#fdeaea;border-color:#f5a0a0;color:#b03030}
+
+/* SUBMIT BUTTONS */
+.btn-submit{padding:.7rem 2rem;border:none;border-radius:8px;font-size:.9rem;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:background .15s,transform .1s;display:inline-flex;align-items:center;gap:.4rem}
+.btn-submit:active{transform:scale(.99)}
+.btn-new{background:#2d5a8e;color:#fff}.btn-new:hover{background:#1a3a5c}
+.btn-rep{background:#c47a2d;color:#fff}.btn-rep:hover{background:#9e6020}
+.success-banner{background:#e8f5ee;border:1px solid #9fd6b5;border-radius:8px;padding:.9rem 1.1rem;align-items:center;gap:.7rem;font-size:.85rem;color:#2d7a4f;margin-top:.7rem;display:none}
+.success-banner.show{display:flex}
+
+/* STATUS BADGES */
+.status-badge{font-size:.7rem;padding:3px 9px;border-radius:20px;font-weight:600;white-space:nowrap;display:inline-block}
+.s-pending{background:#fdf3e3;color:#c47a2d}.s-approved{background:#e8f0f9;color:#2d5a8e}
+.s-in_progress{background:#ede8fa;color:#5a4db5}.s-completed{background:#e8f5ee;color:#2d7a4f}
+.s-rejected{background:#fdeaea;color:#b03030}
+.req-badge{font-size:.7rem;padding:3px 9px;border-radius:20px;font-weight:500;white-space:nowrap;flex-shrink:0}
+.req-badge.new{background:#e8f0f9;color:#2d5a8e}.req-badge.rep{background:#fdf3e3;color:#c47a2d}
+
+/* HISTORY */
+.req-list{display:grid;gap:.6rem}
+.req-row{background:#fafaf8;border:1px solid var(--border);border-radius:8px;padding:.85rem 1rem;display:flex;align-items:flex-start;gap:.9rem}
+.req-info{flex:1;min-width:0}
+.req-info strong{font-size:.88rem;font-weight:500;color:#1a2f4a}
+.req-info p{font-size:.75rem;color:#6b6560;margin-top:.15rem}
+.req-time{font-size:.72rem;color:#a0a09a;flex-shrink:0;text-align:right}
+.track-bar{display:flex;align-items:center;margin:.5rem 0 .25rem;width:100%}
+.track-step{flex:1;text-align:center;font-size:.62rem;font-weight:600;letter-spacing:.03em;text-transform:uppercase;padding:.25rem .1rem;color:#a0a09a;border-bottom:3px solid #e2ddd6}
+.track-step.done{color:#2d7a4f;border-bottom-color:#2d7a4f}
+.track-step.active{color:#2d5a8e;border-bottom-color:#2d5a8e}
+.track-step.rejected{color:#b03030;border-bottom-color:#b03030}
+
+/* SETTINGS */
+.settings-section{margin-bottom:1.5rem}
+.settings-section h4{font-size:.82rem;font-weight:600;color:#1a2f4a;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.75rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)}
+
+/* FILTER BAR */
+.filter-bar{background:#fff;border:1px solid #e2ddd6;border-radius:10px;padding:.85rem 1rem;margin-bottom:1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:flex-end}
+.filter-bar .field{min-width:140px;flex:1;margin:0}
+.filter-bar .field label{margin-bottom:.25rem}
+.filter-bar .field input,.filter-bar .field select{padding:.45rem .65rem;font-size:.82rem;border-radius:7px}
+.filter-bar .search-input{min-width:200px}
+.btn-filter{padding:.45rem 1rem;border:none;border-radius:7px;font-size:.82rem;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .15s;white-space:nowrap}
+.btn-filter-apply{background:#2d5a8e;color:#fff}.btn-filter-apply:hover{background:#1a3a5c}
+.btn-filter-reset{background:#f0f0ed;color:#6b6560;border:1px solid #e2ddd6}.btn-filter-reset:hover{background:#e5e5e0}
+.btn-export{background:#2d7a4f;color:#fff}.btn-export:hover{background:#1d5a38}
+
+/* ADMIN TABLE */
+.admin-table-wrap{background:#fff;border-radius:10px;border:1px solid #e2ddd6;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.admin-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.admin-table th{background:#f5f5f2;font-weight:600;color:#1a2f4a;padding:.65rem .85rem;text-align:left;border-bottom:1px solid #e2ddd6;white-space:nowrap;font-size:.72rem;letter-spacing:.04em;text-transform:uppercase}
+.admin-table td{padding:.7rem .85rem;border-bottom:1px solid #f0ede8;vertical-align:middle}
+.admin-table tr:last-child td{border-bottom:none}
+.admin-table tr:hover td{background:#fafaf8}
+.priority-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.p-high{background:#b03030}.p-med{background:#c47a2d}.p-low{background:#2d7a4f}
+.btn-action{padding:.28rem .65rem;border:none;border-radius:5px;font-size:.75rem;font-weight:500;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:3px}
+.btn-view{background:#e8f0f9;color:#2d5a8e}.btn-view:hover{background:#d0e2f5}
+.btn-delete{background:#fdeaea;color:#b03030}.btn-delete:hover{background:#f9d0d0}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:.75rem 1rem;background:#f8f8f5;border-top:1px solid #e2ddd6;font-size:.8rem;color:#6b6560}
+.page-btns{display:flex;gap:.35rem}
+.page-btn{padding:.3rem .65rem;border:1px solid #e2ddd6;border-radius:5px;background:#fff;cursor:pointer;font-size:.78rem;font-family:'DM Sans',sans-serif;color:#6b6560;transition:all .12s}
+.page-btn:hover{border-color:#2d5a8e;color:#2d5a8e}
+.page-btn.active{background:#2d5a8e;color:#fff;border-color:#2d5a8e}
+.page-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ADMIN MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.hidden{display:none}
+.modal-box{background:#fff;border-radius:14px;width:min(640px,94vw);box-shadow:0 20px 60px rgba(0,0,0,.25);overflow:hidden;max-height:90vh;display:flex;flex-direction:column}
+.modal-header{background:#1a2f4a;color:#fff;padding:1.1rem 1.4rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.modal-header h3{font-size:1rem;font-weight:600}
+.modal-close{background:none;border:none;color:#a0b4c8;font-size:1.4rem;cursor:pointer;line-height:1}
+.modal-close:hover{color:#fff}
+.modal-body{padding:1.4rem;display:grid;gap:.9rem;overflow-y:auto;flex:1}
+.modal-footer{padding:.85rem 1.4rem;background:#f8f8f5;border-top:1px solid #e2ddd6;display:flex;gap:.6rem;justify-content:flex-end;flex-shrink:0}
+.status-select-group{display:flex;flex-wrap:wrap;gap:.4rem}
+.status-opt{padding:.35rem .9rem;border:1.5px solid #e2ddd6;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600;transition:all .12s;background:#fafaf8}
+.status-opt:hover{transform:translateY(-1px)}
+.status-opt.sel-pending{border-color:#c47a2d;background:#fdf3e3;color:#c47a2d}
+.status-opt.sel-approved{border-color:#2d5a8e;background:#e8f0f9;color:#2d5a8e}
+.status-opt.sel-in_progress{border-color:#5a4db5;background:#ede8fa;color:#5a4db5}
+.status-opt.sel-completed{border-color:#2d7a4f;background:#e8f5ee;color:#2d7a4f}
+.status-opt.sel-rejected{border-color:#b03030;background:#fdeaea;color:#b03030}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
+.detail-field{background:#f8f8f5;border-radius:7px;padding:.5rem .7rem}
+.detail-field .dlabel{font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:#a0a09a;font-weight:500}
+.detail-field .dval{font-size:.85rem;font-weight:500;color:#1a2f4a;margin-top:.1rem;word-break:break-word}
+.requester-note-block{background:#f8f8f5;border-left:3px solid #c47a2d;border-radius:0 6px 6px 0;padding:.6rem .9rem;font-size:.82rem;color:#1a1814}
+.requester-note-block .note-label{font-size:.65rem;text-transform:uppercase;letter-spacing:.06em;color:#a0a09a;font-weight:500;margin-bottom:.2rem}
+
+/* PROFILE */
+.profile-grid{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+.pfield{background:#fafaf8;border:1px solid var(--border);border-radius:8px;padding:.7rem .9rem}
+.pfield label{font-size:.7rem;text-transform:uppercase;letter-spacing:.06em;color:#6b6560;font-weight:500}
+.pfield p{font-size:.9rem;font-weight:500;color:#1a2f4a;margin-top:.15rem}
+
+/* MISC */
+.empty-state{text-align:center;padding:2rem 1rem;color:var(--muted);font-size:.85rem}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+.spinner-dark{border-color:rgba(0,0,0,.15);border-top-color:#2d5a8e}
+@keyframes spin{to{transform:rotate(360deg)}}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem}
+.section-header h3{font-size:.95rem;font-weight:600;color:#1a2f4a}
+
+@media(max-width:768px){
+  .admin-sidebar{width:160px}
+  .admin-nav-item{padding:.55rem .8rem;font-size:.78rem}
+  .admin-table{font-size:.75rem}
+  .admin-table th,.admin-table td{padding:.5rem .6rem}
+  .detail-grid{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:repeat(3,1fr)}
+}
+@media(max-width:600px){
+  .admin-sidebar{display:none}
+  .form-row,.form-two{grid-template-columns:1fr}
+  .tabs{flex-wrap:wrap}
+  .tab{flex:1 1 40%;font-size:.75rem;padding:.45rem .3rem}
+  .profile-grid{grid-template-columns:1fr}
+  .topbar,.admin-topbar{padding:.6rem .9rem}
+  .main-wrap,.admin-content{padding:.8rem}
+  .filter-bar .field{min-width:calc(50% - .3rem)}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .pw-rules{grid-template-columns:1fr}
+  .otp-input{width:38px;height:46px;font-size:1.1rem}
+}
+</style>
+</head>
+<body>
+<div id="toastContainer"></div>
+
+<!-- LOGIN PAGE -->
+<div class="page active" id="loginPage">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="logo-icon">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      </div>
+      <h1>Assembly Maintenance<br/>System</h1>
+      <p>Facilities Management Portal</p>
+    </div>
+    <div class="badge-row">
+      <span class="badge blue">New Item Requests</span>
+      <span class="badge amber">Repair Requests</span>
+    </div>
+
+    <!-- SIGN IN -->
+    <div id="loginFormWrap">
+      <div class="form-grid">
+        <div class="field"><label>Email Address</label><input id="l_email" type="email" placeholder="you@organisation.com" autocomplete="email"/></div>
+        <div class="field"><label>Password</label><input id="l_pass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
+        <p class="err-msg" id="loginErr"></p>
+        <button class="btn-primary" id="loginBtn" onclick="doLogin()">Sign In to Continue →</button>
+        <button class="btn-secondary" onclick="showForgotPasswordForm()">Forgot password?</button>
+        <div class="divider"><span>or</span></div>
+        <button class="btn-secondary" onclick="showRegisterForm()">Create an account</button>
+        <button class="btn-secondary" style="margin-top:.3rem" onclick="showAdminLogin()">🔐 Admin / Facilities Login</button>
+      </div>
+    </div>
+
+    <!-- REGISTER -->
+    <div id="registerFormWrap" style="display:none">
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="field"><label>Full Name</label><input id="r_name" type="text" placeholder="e.g. Jane Mwangi" autocomplete="name"/></div>
+          <div class="field"><label>Department</label>
+            <select id="r_dept">
+              <option value="">Select department</option>
+              <option>Administration</option><option>Finance &amp; Accounts</option>
+              <option>Human Resources</option><option>ICT &amp; Systems</option>
+              <option>Legal &amp; Compliance</option><option>Operations</option>
+              <option>Procurement</option><option>Strategy &amp; Planning</option><option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field"><label>Floor / Office</label><input id="r_floor" type="text" placeholder="e.g. 3rd Floor, Room 301"/></div>
+          <div class="field"><label>Designation</label><input id="r_designation" type="text" placeholder="e.g. Senior Analyst"/></div>
+        </div>
+        <div class="field"><label>Email Address</label><input id="r_email" type="email" placeholder="you@organisation.com" autocomplete="email"/></div>
+        <div class="form-row">
+          <div class="field">
+            <label>Password</label>
+            <input id="r_pass" type="password" placeholder="Min 8 chars" autocomplete="new-password" oninput="updateStrengthMeter('r_pass','r_strength','r_rules','r_strength_wrap')"/>
+            <div class="pw-strength-wrap" id="r_strength_wrap" style="display:none">
+              <div class="pw-bar-row" id="r_strength"><div class="pw-seg"></div><div class="pw-seg"></div><div class="pw-seg"></div><div class="pw-seg"></div></div>
+              <div class="pw-rules" id="r_rules"></div>
+            </div>
+          </div>
+          <div class="field"><label>Confirm Password</label><input id="r_confirm" type="password" placeholder="Repeat password" autocomplete="new-password"/></div>
+        </div>
+        <p class="err-msg" id="registerErr"></p>
+        <button class="btn-primary" id="registerBtn" onclick="doRegister()">Create Account →</button>
+        <div class="divider"><span>or</span></div>
+        <button class="btn-secondary" onclick="showLoginForm()">← Back to Sign In</button>
+      </div>
+    </div>
+
+    <!-- FORGOT / RESET PASSWORD -->
+    <div id="forgotPasswordFormWrap" style="display:none">
+      <div class="form-grid">
+        <div class="field"><label>Email Address</label><input id="f_email" type="email" placeholder="you@organisation.com" autocomplete="email"/></div>
+        <div class="field"><label>Reset Code</label><input id="f_token" type="text" placeholder="Enter the code from your email" disabled/></div>
+        <div class="field">
+          <label>New Password</label>
+          <input id="f_pass" type="password" placeholder="New password" autocomplete="new-password" disabled oninput="updateStrengthMeter('f_pass','f_strength','f_rules','f_strength_wrap')"/>
+          <div class="pw-strength-wrap" id="f_strength_wrap" style="display:none">
+            <div class="pw-bar-row" id="f_strength"><div class="pw-seg"></div><div class="pw-seg"></div><div class="pw-seg"></div><div class="pw-seg"></div></div>
+            <div class="pw-rules" id="f_rules"></div>
+          </div>
+        </div>
+        <div class="field"><label>Confirm New Password</label><input id="f_confirm" type="password" placeholder="Repeat new password" autocomplete="new-password" disabled/></div>
+        <p class="err-msg" id="forgotErr"></p>
+        <button class="btn-primary" id="requestResetBtn" onclick="doRequestPasswordReset()">Send reset code</button>
+        <button class="btn-primary" id="resetPasswordBtn" style="margin-top:.5rem;display:none" onclick="doResetPassword()">Reset Password</button>
+        <div class="divider"><span>or</span></div>
+        <button class="btn-secondary" onclick="showLoginForm()">← Back to Sign In</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- EMAIL VERIFICATION PAGE -->
+<div class="page" id="verifyPage">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="logo-icon" style="background:#2d5a8e">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+      </div>
+      <h1>Verify Your Email</h1>
+      <p>Check your inbox for a 6-digit code</p>
+    </div>
+    <p style="text-align:center;font-size:.85rem;color:#6b6560;margin-bottom:.5rem">We sent a code to <strong id="verifyEmailDisplay"></strong></p>
+    <div class="otp-row">
+      <input class="otp-input" type="text" maxlength="1" id="otp0" oninput="otpInput(0)" onkeydown="otpKey(event,0)"/>
+      <input class="otp-input" type="text" maxlength="1" id="otp1" oninput="otpInput(1)" onkeydown="otpKey(event,1)"/>
+      <input class="otp-input" type="text" maxlength="1" id="otp2" oninput="otpInput(2)" onkeydown="otpKey(event,2)"/>
+      <input class="otp-input" type="text" maxlength="1" id="otp3" oninput="otpInput(3)" onkeydown="otpKey(event,3)"/>
+      <input class="otp-input" type="text" maxlength="1" id="otp4" oninput="otpInput(4)" onkeydown="otpKey(event,4)"/>
+      <input class="otp-input" type="text" maxlength="1" id="otp5" oninput="otpInput(5)" onkeydown="otpKey(event,5)"/>
+    </div>
+    <p class="err-msg" id="verifyErr"></p>
+    <button class="btn-primary" id="verifyBtn" onclick="doVerifyEmail()">Verify Email →</button>
+    <button class="btn-secondary" id="resendBtn" onclick="doResendCode()">Resend code</button>
+    <p class="ok-msg" id="resendMsg" style="display:none">✓ New code sent to your email!</p>
+    <div class="divider"><span>or</span></div>
+    <button class="btn-secondary" onclick="showPage('loginPage');showLoginForm()">← Back to Sign In</button>
+  </div>
+</div>
+
+<!-- ADMIN LOGIN PAGE -->
+<div class="page" id="adminLoginPage">
+  <div class="login-wrap">
+    <div class="login-logo">
+      <div class="logo-icon" style="background:#0d1f30">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#c47a2d" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
+      </div>
+      <h1>Admin Panel</h1>
+      <p>Facilities Management · Restricted Access</p>
+    </div>
+    <div class="badge-row"><span class="badge admin-badge">🔐 Admin Only</span></div>
+    <div class="form-grid">
+      <div class="field"><label>Admin Email</label><input id="a_email" type="email" placeholder="admin@organisation.com"/></div>
+      <div class="field"><label>Password</label><input id="a_pass" type="password" placeholder="••••••••"/></div>
+      <p class="err-msg" id="adminLoginErr"></p>
+      <button class="btn-primary" id="adminLoginBtn" style="background:#0d1f30" onclick="doAdminLogin()">Access Admin Panel →</button>
+      <button class="btn-secondary" onclick="toggleAdminForgot()">Forgot admin password?</button>
+      <div class="divider"><span>or</span></div>
+      <button class="btn-secondary" onclick="showStaffLogin()">← Staff Login</button>
+      <button class="btn-secondary" style="background:#f0f0f0;margin-top:.4rem;font-size:.75rem" onclick="testDBConnection()">🔧 Test Database Connection</button>
+    </div>
+    <div id="adminForgotWrap" style="display:none;margin-top:1rem;padding-top:1rem;border-top:1px solid #e2ddd6">
+      <p style="font-size:.82rem;color:#6b6560;margin-bottom:.6rem">Enter your admin email to receive a reset code.</p>
+      <div class="field"><label>Admin Email</label><input id="af_email" type="email" placeholder="admin@organisation.com"/></div>
+      <p class="err-msg" id="adminForgotErr"></p>
+      <button class="btn-primary" style="background:#0d1f30;margin-top:.5rem" onclick="doAdminForgotPassword()">Send reset code</button>
+    </div>
+  </div>
+</div>
+
+<!-- STAFF APP PAGE -->
+<div class="page" id="appPage">
+  <div class="topbar">
+    <div class="topbar-left"><h2>Maintenance Portal</h2><p>Office Facilities Management</p></div>
+    <div class="topbar-right">
+      <div class="user-chip"><div class="avatar" id="userAvatar">JM</div><span id="userLabel">Jane Mwangi</span></div>
+      <button class="btn-logout" onclick="logout()">Sign Out</button>
+    </div>
+  </div>
+  <div class="main-wrap">
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('new',this)">📦 Request New Item</button>
+      <button class="tab"        onclick="switchTab('repair',this)">🔧 Request Repair</button>
+      <button class="tab"        onclick="switchTab('history',this)">📋 My Requests</button>
+      <button class="tab"        onclick="switchTab('settings',this)">⚙️ Settings</button>
+    </div>
+
+    <!-- NEW ITEM TAB -->
+    <div class="tab-content active" id="tab-new">
+      <div class="card">
+        <div class="card-title"><div class="section-icon icon-new">📦</div>Select Items to Request</div>
+        <div class="item-grid" id="newItemGrid"></div>
+        <div class="form-section" id="newItemForm" style="display:none">
+          <div id="newItemQtyRows" style="margin-bottom:.7rem"></div>
+          <div class="form-two">
+            <div class="field"><label>Required By (Date)</label><input id="ni_date" type="date"/></div>
+          </div>
+          <div class="priority-row">
+            <label>Priority:</label>
+            <div class="priority-btns">
+              <button class="prio-btn low"        onclick="setPrio('low',this,'new')">Low</button>
+              <button class="prio-btn active med" onclick="setPrio('med',this,'new')">Medium</button>
+              <button class="prio-btn high"       onclick="setPrio('high',this,'new')">High</button>
+            </div>
+          </div>
+          <div class="field"><label>Justification / Notes</label>
+            <textarea id="ni_notes" placeholder="Briefly explain why these items are needed…"></textarea>
+          </div>
+          <div style="display:flex;justify-content:flex-end">
+            <button class="btn-submit btn-new" id="newSubmitBtn" onclick="submitNew()">Submit Request →</button>
+          </div>
+          <div class="success-banner" id="newSuccess">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+            Request submitted! You will receive an email confirmation shortly.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REPAIR TAB -->
+    <div class="tab-content" id="tab-repair">
+      <div class="card">
+        <div class="card-title"><div class="section-icon icon-rep">🔧</div>Select Items Requiring Repair</div>
+        <p style="font-size:.8rem;color:#6b6560;margin-bottom:.75rem">Select one or more items. Each will have its own issue description and optional photo.</p>
+        <div class="repair-list" id="repairItemList"></div>
+        <div id="repairItemCards"></div>
+        <div id="repairFormBottom" style="display:none">
+          <div class="priority-row">
+            <label>Overall Urgency:</label>
+            <div class="priority-btns">
+              <button class="prio-btn low"        onclick="setPrio('low',this,'rep')">Low</button>
+              <button class="prio-btn active med" onclick="setPrio('med',this,'rep')">Medium</button>
+              <button class="prio-btn high"       onclick="setPrio('high',this,'rep')">Urgent</button>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:flex-end">
+            <button class="btn-submit btn-rep" id="repSubmitBtn" onclick="submitRepair()">Submit Repair Request →</button>
+          </div>
+          <div class="success-banner" id="repSuccess">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
+            Repair request submitted! A technician will be assigned shortly.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MY REQUESTS TAB -->
+    <div class="tab-content" id="tab-history">
+      <div class="card">
+        <div class="card-title">📋 Your Submitted Requests</div>
+        <div class="req-list" id="historyList"><div class="empty-state">Loading your requests…</div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS TAB -->
+    <div class="tab-content" id="tab-settings">
+      <div class="card">
+        <div class="card-title">⚙️ Settings</div>
+        <div class="sub-tabs">
+          <button class="sub-tab active" onclick="switchSubTab('profile',this)">Profile</button>
+          <button class="sub-tab"        onclick="switchSubTab('security',this)">Security</button>
+        </div>
+
+        <div class="sub-tab-content active" id="sub-profile">
+          <div class="settings-section">
+            <h4>Your Profile</h4>
+            <div style="display:flex;align-items:center;gap:1rem;margin-bottom:1.25rem;padding:.9rem;background:#f0f5fb;border-radius:8px">
+              <div class="avatar" id="profAvatar" style="width:48px;height:48px;font-size:1rem;background:#2d5a8e">JM</div>
+              <div><div style="font-weight:600;font-size:1rem" id="profName">—</div><div style="font-size:.8rem;color:#6b6560" id="profDesg">—</div></div>
+            </div>
+            <div class="profile-grid" id="profileGrid"></div>
+          </div>
+          <div class="settings-section">
+            <h4>Edit Profile</h4>
+            <div class="form-grid">
+              <div class="field"><label>Full Name</label><input id="edit_name" type="text"/></div>
+              <div class="form-row">
+                <div class="field"><label>Floor / Office</label><input id="edit_floor" type="text"/></div>
+                <div class="field"><label>Designation</label><input id="edit_designation" type="text"/></div>
+              </div>
+              <p class="err-msg" id="profileErr"></p>
+              <p class="ok-msg"  id="profileOk" style="display:none"></p>
+              <button class="btn-primary" id="saveProfileBtn" onclick="saveProfile()">Save Profile →</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="sub-tab-content" id="sub-security">
+          <div class="settings-section">
+            <h4>Change Password</h4>
+            <div class="form-grid">
+              <div class="field"><label>Current Password</label><input id="cp_current" type="password" placeholder="Your current password"/></div>
+              <div class="field">
+                <label>New Password</label>
+                <input id="cp_new" type="password" placeholder="New password" oninput="updateStrengthMeter('cp_new','cp_strength','cp_rules','cp_strength_wrap')"/>
+                <div class="pw-strength-wrap" id="cp_strength_wrap" style="display:none">
+                  <div class="pw-bar-row" id="cp_strength"><div class="pw-seg"></div><div class="pw-seg"></div><div class="pw-seg"></div><div class="pw-seg"></div></div>
+                  <div class="pw-rules" id="cp_rules"></div>
+                </div>
+              </div>
+              <div class="field"><label>Confirm New Password</label><input id="cp_confirm" type="password" placeholder="Repeat new password"/></div>
+              <p class="err-msg" id="changePwErr"></p>
+              <p class="ok-msg"  id="changePwOk" style="display:none"></p>
+              <button class="btn-primary" id="changePwBtn" onclick="doChangePassword()">Change Password →</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ADMIN PAGE -->
+<div class="page" id="adminPage">
+  <div class="admin-topbar">
+    <div><h2>🛡️ Admin Panel <span class="admin-badge-pill">Facilities</span></h2><p>Maintenance Request Management</p></div>
+    <div style="display:flex;align-items:center;gap:.75rem">
+      <div class="user-chip" style="background:rgba(255,255,255,.1)"><div class="avatar" id="adminAvatar">AD</div><span id="adminLabel">Admin</span></div>
+      <button class="btn-logout" onclick="adminLogout()">Sign Out</button>
+    </div>
+  </div>
+
+  <div class="admin-layout">
+    <nav class="admin-sidebar">
+      <div class="admin-nav-item active" onclick="adminNav('dashboard',this)"><span class="nav-icon">📊</span> Dashboard</div>
+      <div class="admin-nav-item"        onclick="adminNav('requests',this)"><span class="nav-icon">📋</span> All Requests</div>
+      <div class="admin-nav-item"        onclick="adminNav('pending',this)"><span class="nav-icon">⏳</span> Pending <span class="nav-badge" id="navBadgePending" style="display:none">0</span></div>
+      <div class="admin-nav-item"        onclick="adminNav('approved',this)"><span class="nav-icon">✅</span> Approved</div>
+      <div class="admin-nav-item"        onclick="adminNav('in_progress',this)"><span class="nav-icon">🔄</span> In Progress</div>
+      <div class="admin-nav-item"        onclick="adminNav('completed',this)"><span class="nav-icon">🏁</span> Completed</div>
+      <div class="admin-nav-item"        onclick="adminNav('rejected',this)"><span class="nav-icon">❌</span> Rejected</div>
+      <div style="flex:1"></div>
+      <div class="admin-nav-item"        onclick="adminNav('admin_settings',this)"><span class="nav-icon">⚙️</span> Settings</div>
+    </nav>
+
+    <div class="admin-content">
+
+      <!-- DASHBOARD -->
+      <div id="panel-dashboard">
+        <div class="section-header"><h3>Dashboard Overview</h3><span id="dashTimestamp" style="font-size:.72rem;color:#a0a09a"></span></div>
+        <div class="stat-grid">
+          <div class="stat-card stat-total"><div class="stat-label">Total</div><div class="stat-val" id="st-total">—</div></div>
+          <div class="stat-card stat-pending"><div class="stat-label">Pending</div><div class="stat-val" id="st-pending">—</div></div>
+          <div class="stat-card stat-approved"><div class="stat-label">Approved</div><div class="stat-val" id="st-approved">—</div></div>
+          <div class="stat-card stat-inprogress"><div class="stat-label">In Progress</div><div class="stat-val" id="st-inprogress">—</div></div>
+          <div class="stat-card stat-completed"><div class="stat-label">Completed</div><div class="stat-val" id="st-completed">—</div></div>
+          <div class="stat-card stat-rejected"><div class="stat-label">Rejected</div><div class="stat-val" id="st-rejected">—</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+          <div class="card" style="margin-bottom:0"><div class="card-title">📦 By Type</div><div id="typeChart" style="font-size:.85rem;color:#6b6560"></div></div>
+          <div class="card" style="margin-bottom:0"><div class="card-title">🏢 By Department</div><div id="deptChart" style="font-size:.85rem;color:#6b6560"></div></div>
+        </div>
+        <div class="card"><div class="card-title">🕐 Recent Requests</div><div id="recentList"></div></div>
+      </div>
+
+      <!-- REQUESTS TABLE -->
+      <div id="panel-requests" style="display:none">
+        <div class="section-header">
+          <h3 id="panelTitle">All Requests</h3>
+          <button class="btn-filter btn-export" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+        <div class="filter-bar">
+          <div class="field" style="min-width:200px;flex:2"><label>Search</label>
+            <input class="search-input" id="f_search" type="text" placeholder="Name, item, asset tag, issue…" oninput="debounceFilter()"/>
+          </div>
+          <div class="field"><label>Type</label>
+            <select id="f_type" onchange="applyFilters()">
+              <option value="">All Types</option><option value="new_item">New Item</option><option value="repair">Repair</option>
+            </select>
+          </div>
+          <div class="field"><label>Priority</label>
+            <select id="f_priority" onchange="applyFilters()">
+              <option value="">All Priorities</option><option value="high">High</option><option value="med">Medium</option><option value="low">Low</option>
+            </select>
+          </div>
+          <div class="field"><label>Department</label>
+            <select id="f_dept" onchange="applyFilters()">
+              <option value="">All Departments</option>
+              <option>Administration</option><option>Finance &amp; Accounts</option><option>Human Resources</option>
+              <option>ICT &amp; Systems</option><option>Legal &amp; Compliance</option><option>Operations</option>
+              <option>Procurement</option><option>Strategy &amp; Planning</option><option>Other</option>
+            </select>
+          </div>
+          <div class="field"><label>From Date</label><input id="f_from" type="date" onchange="applyFilters()"/></div>
+          <div class="field"><label>To Date</label><input id="f_to" type="date" onchange="applyFilters()"/></div>
+          <div style="display:flex;gap:.4rem;align-items:flex-end;padding-bottom:.05rem">
+            <button class="btn-filter btn-filter-reset" onclick="resetFilters()">Reset</button>
+          </div>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead><tr><th>#ID</th><th>Requester</th><th>Item</th><th>Type</th><th>Priority</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="requestsBody"><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
+          </table>
+          <div class="pagination"><span id="paginationInfo"></span><div class="page-btns" id="pageButtons"></div></div>
+        </div>
+      </div>
+
+      <!-- ADMIN SETTINGS -->
+      <div id="panel-admin-settings" style="display:none">
+        <div class="section-header"><h3>Admin Settings</h3></div>
+        <div class="card">
+          <div class="card-title">🔑 Change Admin Password</div>
+          <div class="form-grid" style="max-width:420px">
+            <div class="field"><label>Current Password</label><input id="acp_current" type="password" placeholder="Current password"/></div>
+            <div class="field">
+              <label>New Password</label>
+              <input id="acp_new" type="password" placeholder="New password" oninput="updateStrengthMeter('acp_new','acp_strength','acp_rules','acp_strength_wrap')"/>
+              <div class="pw-strength-wrap" id="acp_strength_wrap" style="display:none">
+                <div class="pw-bar-row" id="acp_strength"><div class="pw-seg"></div><div class="pw-seg"></div><div class="pw-seg"></div><div class="pw-seg"></div></div>
+                <div class="pw-rules" id="acp_rules"></div>
+              </div>
+            </div>
+            <div class="field"><label>Confirm New Password</label><input id="acp_confirm" type="password" placeholder="Repeat new password"/></div>
+            <p class="err-msg" id="adminChangePwErr"></p>
+            <p class="ok-msg"  id="adminChangePwOk" style="display:none"></p>
+            <button class="btn-primary" style="background:#0d1f30" id="adminChangePwBtn" onclick="doAdminChangePassword()">Change Password →</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN STATUS MODAL -->
+<div class="modal-overlay hidden" id="modalOverlay">
+  <div class="modal-box">
+    <div class="modal-header"><h3>Update Request Status</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-body">
+      <div class="detail-grid" id="modalDetails"></div>
+      <div id="modalRequesterNotes" style="display:none"></div>
+      <div id="modalPhoto" style="display:none"></div>
+      <div>
+        <div style="font-size:.75rem;font-weight:500;color:#6b6560;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.45rem">New Status</div>
+        <div class="status-select-group">
+          <div class="status-opt sel-pending"     onclick="selectStatus('pending',this)">⏳ Pending</div>
+          <div class="status-opt sel-approved"    onclick="selectStatus('approved',this)">✅ Approved</div>
+          <div class="status-opt sel-in_progress" onclick="selectStatus('in_progress',this)">🔄 In Progress</div>
+          <div class="status-opt sel-completed"   onclick="selectStatus('completed',this)">🏁 Completed</div>
+          <div class="status-opt sel-rejected"    onclick="selectStatus('rejected',this)">❌ Rejected</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Admin Notes / Response to Requester</label>
+        <textarea id="modalNotes" placeholder="Add notes — these will be emailed to the requester…" style="min-height:80px"></textarea>
+      </div>
+      <p class="err-msg" id="modalErr"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-action btn-view" style="padding:.5rem 1rem" onclick="closeModal()">Cancel</button>
+      <button class="btn-submit btn-new" style="padding:.5rem 1.2rem;margin:0" id="modalSaveBtn" onclick="saveStatus()">Save &amp; Notify →</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_BASE = '/api';
+
+const ITEMS = [
+  { id:'desk',             label:'Desk',                         icon:'🖥️' },
+  { id:'desk_side_drawer', label:'Desk & Side Drawer',           icon:'🗂️' },
+  { id:'side_drawer',      label:'Side Drawer',                  icon:'📂' },
+  { id:'office_chair',     label:'Office Chair',                 icon:'🪑' },
+  { id:'coat_hanger',      label:'Coat Hanger',                  icon:'🪝' },
+  { id:'metallic_cabinet', label:'Metallic Cabinet',             icon:'🗄️' },
+  { id:'mdf_cabinet',      label:'MDF Low Level Cabinet',        icon:'📦' },
+  { id:'double_cabinet',   label:'Double Door Metallic Cabinet', icon:'🚪' },
+  { id:'visitor_chair',    label:'Visitor Chair',                icon:'💺' },
+];
+
+/* ── STATE ── */
+let currentUser   = null;
+let adminUser     = null;
+let adminToken    = null;
+let pendingUserId = null;
+let forgotPasswordRequested = false;
+let newItemSelections = {};   // { [id]: { item, quantity } }
+let newPrio = 'med';
+let repairSelections  = {};   // { [id]: { item, issue, tag, date, notes, photoPath } }
+let repPrio = 'med';
+let modalRequestId = null;
+let modalSelStatus = null;
+let currentPage    = 1;
+let currentStatusFilter = '';
+let filterDebounce = null;
+let userSSE  = null;
+let adminSSE = null;
+
+/* ── HELPERS ── */
+const el    = id => document.getElementById(id);
+const v     = id => el(id)?.value ?? '';
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  el(id).classList.add('active');
+}
+
+function statusBadge(s) {
+  const L = { pending:'Pending', approved:'Approved', in_progress:'In Progress', completed:'Completed', rejected:'Rejected' };
+  return `<span class="status-badge s-${s}">${L[s]||s}</span>`;
+}
+function priorityDot(p) {
+  return `<span class="priority-dot p-${p}"></span>${p.charAt(0).toUpperCase()+p.slice(1)}`;
+}
+function trackBar(status) {
+  const steps = ['pending','approved','in_progress','completed'];
+  if (status === 'rejected')
+    return `<div class="track-bar">${steps.map(s=>`<div class="track-step rejected">${s.replace('_',' ')}</div>`).join('')}</div>`;
+  const idx = steps.indexOf(status);
+  return `<div class="track-bar">${steps.map((s,i)=>{
+    const cls = i<idx?'done':i===idx?'active':'';
+    return `<div class="track-step ${cls}">${s.replace('_',' ')}</div>`;
+  }).join('')}</div>`;
+}
+
+function showToast(msg, type='default') {
+  const d = document.createElement('div');
+  d.className = `toast toast-${type}`;
+  d.innerHTML = `<span style="flex:1">${msg}</span><button class="toast-close" onclick="this.parentElement.remove()">×</button>`;
+  el('toastContainer').appendChild(d);
+  setTimeout(()=>d.remove(), 6000);
+}
+
+/* ── PASSWORD STRENGTH ── */
+const PW_RULES = [
+  { label:'At least 8 characters',          test: p => p.length >= 8 },
+  { label:'One uppercase letter (A–Z)',      test: p => /[A-Z]/.test(p) },
+  { label:'One lowercase letter (a–z)',      test: p => /[a-z]/.test(p) },
+  { label:'One number (0–9)',                test: p => /[0-9]/.test(p) },
+  { label:'One special character (!@#$…)',   test: p => /[^A-Za-z0-9]/.test(p) },
+];
+
+function updateStrengthMeter(inputId, barId, rulesId, wrapId) {
+  const pw  = el(inputId).value;
+  const bar = el(barId);
+  if (!bar) return;
+  el(wrapId).style.display = pw.length > 0 ? 'block' : 'none';
+  const met  = PW_RULES.filter(r => r.test(pw)).length;
+  const cls  = met<=1?'s1':met===2?'s2':met<=3?'s3':'s4';
+  bar.querySelectorAll('.pw-seg').forEach((s,i)=>{ s.className='pw-seg'; if(i<met) s.classList.add(cls); });
+  if (el(rulesId))
+    el(rulesId).innerHTML = PW_RULES.map(r=>`<div class="pw-rule ${r.test(pw)?'met':''}">${r.label}</div>`).join('');
+}
+
+function validatePassword(pw) {
+  if (!pw||pw.length<8)      return 'Password must be at least 8 characters.';
+  if (!/[A-Z]/.test(pw))    return 'Must contain at least one uppercase letter.';
+  if (!/[a-z]/.test(pw))    return 'Must contain at least one lowercase letter.';
+  if (!/[0-9]/.test(pw))    return 'Must contain at least one number.';
+  if (!/[^A-Za-z0-9]/.test(pw)) return 'Must contain at least one special character.';
+  return null;
+}
+function validateEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e); }
+
+/* ── SSE ── */
+function connectUserSSE() {
+  if (userSSE) { userSSE.close(); userSSE=null; }
+  userSSE = new EventSource('/api/user-events', { withCredentials:true });
+  userSSE.addEventListener('status_update', e => {
+    const d = JSON.parse(e.data);
+    showToast(`Your request <strong>#${d.request_id} — ${d.item_name}</strong> is now <strong>${d.status_label}</strong>`, 'info');
+    if (el('tab-history')?.classList.contains('active')) loadHistory();
+  });
+  userSSE.onerror = ()=> setTimeout(connectUserSSE, 5000);
+}
+
+async function connectAdminSSE() {
+  if (adminSSE) { adminSSE.close(); adminSSE=null; }
+  try {
+    const r = await fetch('/api/sse-ticket', {
+      method: 'POST',
+      headers: { 'x-admin-token': adminToken }
+    });
+    const data = await r.json();
+    if (!data.success) return;
+    adminSSE = new EventSource(`/api/events?ticket=${encodeURIComponent(data.ticket)}`);
+    adminSSE.addEventListener('new_request', e => {
+      const d = JSON.parse(e.data);
+      showToast(`New ${d.type==='repair'?'🔧 repair':'📦 item'} request from <strong>${d.requester}</strong> (${d.department})`, 'info');
+      const badge = el('navBadgePending');
+      if (badge) { badge.textContent = (parseInt(badge.textContent)||0)+1; badge.style.display='inline-block'; }
+      if (el('panel-requests')?.style.display!=='none') loadRequests();
+    });
+    adminSSE.onerror = ()=> { if(adminToken) setTimeout(connectAdminSSE,5000); };
+  } catch(e) {
+    if (adminToken) setTimeout(connectAdminSSE, 5000);
+  }
+}
+
+/* ── AUTH — STAFF ── */
+function showRegisterForm() {
+  el('loginFormWrap').style.display='none'; el('forgotPasswordFormWrap').style.display='none';
+  el('registerFormWrap').style.display='block';
+  el('loginErr').textContent=el('registerErr').textContent=el('forgotErr').textContent='';
+  forgetPasswordFormReset();
+}
+function showLoginForm() {
+  el('registerFormWrap').style.display='none'; el('forgotPasswordFormWrap').style.display='none';
+  el('loginFormWrap').style.display='block';
+  el('loginErr').textContent=el('registerErr').textContent=el('forgotErr').textContent='';
+  forgetPasswordFormReset();
+}
+
+async function doLogin() {
+  const email=v('l_email').trim(), password=el('l_pass').value;
+  const errEl=el('loginErr'), btn=el('loginBtn');
+  errEl.textContent='';
+  if (!email||!password) { errEl.textContent='Email and password are required.'; return; }
+  if (!validateEmail(email)) { errEl.textContent='Please enter a valid email address.'; return; }
+  btn.innerHTML='<span class="spinner"></span>Signing in…'; btn.disabled=true;
+  try {
+    const res  = await fetch(API_BASE+'?action=login',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    const data = await res.json();
+    if (data.needs_verification) {
+      pendingUserId=data.user_id;
+      el('verifyEmailDisplay').textContent=email;
+      showPage('verifyPage'); el('otp0').focus(); return;
+    }
+    if (!data.success) { errEl.textContent=data.message||'Login failed.'; return; }
+    currentUser=data.user; initApp();
+  } catch(e) { errEl.textContent='Connection error. Please check your network.'; }
+  finally { btn.innerHTML='Sign In &amp; Continue →'; btn.disabled=false; }
+}
+
+async function doRegister() {
+  const name=v('r_name').trim(), department=v('r_dept'), floor_office=v('r_floor').trim();
+  const designation=v('r_designation').trim(), email=v('r_email').trim(), password=el('r_pass').value, confirmPw=el('r_confirm').value;
+  const errEl=el('registerErr'), btn=el('registerBtn');
+  errEl.textContent='';
+  if (!name||!department||!floor_office||!designation||!email||!password) { errEl.textContent='Please fill in all fields.'; return; }
+  if (!validateEmail(email)) { errEl.textContent='Please enter a valid email address.'; return; }
+  const pwErr=validatePassword(password); if(pwErr){errEl.textContent=pwErr;return;}
+  if (password!==confirmPw) { errEl.textContent='Passwords do not match.'; return; }
+  btn.innerHTML='<span class="spinner"></span>Creating account…'; btn.disabled=true;
+  try {
+    const res  = await fetch(API_BASE+'?action=register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,department,floor_office,designation,email,password})});
+    const data = await res.json();
+    if (!data.success) { errEl.textContent=data.message||'Registration failed.'; return; }
+    pendingUserId=data.user_id;
+    el('verifyEmailDisplay').textContent=email;
+    showPage('verifyPage'); el('otp0').focus();
+  } catch(e) { errEl.textContent='Connection error. Please try again.'; }
+  finally { btn.innerHTML='Create Account →'; btn.disabled=false; }
+}
+
+/* ── OTP VERIFICATION ── */
+function otpInput(idx) {
+  const v2=el('otp'+idx).value.replace(/\D/g,'');
+  el('otp'+idx).value=v2;
+  if (v2&&idx<5) el('otp'+(idx+1)).focus();
+}
+function otpKey(e,idx) {
+  if (e.key==='Backspace'&&!el('otp'+idx).value&&idx>0) el('otp'+(idx-1)).focus();
+  if (e.key==='Enter') doVerifyEmail();
+}
+function getOtp() { return [0,1,2,3,4,5].map(i=>el('otp'+i).value).join(''); }
+
+async function doVerifyEmail() {
+  const code=getOtp(), errEl=el('verifyErr'), btn=el('verifyBtn');
+  errEl.textContent='';
+  if (code.length<6) { errEl.textContent='Please enter the full 6-digit code.'; return; }
+  if (!pendingUserId) { errEl.textContent='Session expired. Please register again.'; return; }
+  btn.innerHTML='<span class="spinner"></span>Verifying…'; btn.disabled=true;
+  try {
+    const res  = await fetch(API_BASE+'?action=verify_email',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:pendingUserId,code})});
+    const data = await res.json();
+    if (!data.success) { errEl.textContent=data.message||'Invalid code.'; return; }
+    currentUser=data.user; pendingUserId=null; initApp();
+  } catch(e) { errEl.textContent='Connection error. Please try again.'; }
+  finally { btn.innerHTML='Verify Email →'; btn.disabled=false; }
+}
+
+async function doResendCode() {
+  if (!pendingUserId) return;
+  const btn=el('resendBtn'); btn.disabled=true;
+  el('resendMsg').style.display='none';
+  try {
+    await fetch(API_BASE+'?action=resend_verification',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:pendingUserId})});
+    el('resendMsg').style.display='block';
+    setTimeout(()=>{el('resendMsg').style.display='none';},4000);
+  } catch(e){}
+  finally { setTimeout(()=>{btn.disabled=false;},30000); }
+}
+
+/* ── FORGOT / RESET PASSWORD ── */
+function showForgotPasswordForm() {
+  el('loginFormWrap').style.display='none'; el('registerFormWrap').style.display='none';
+  el('forgotPasswordFormWrap').style.display='block';
+  el('loginErr').textContent=el('registerErr').textContent=el('forgotErr').textContent='';
+  forgetPasswordFormReset();
+}
+function forgetPasswordFormReset() {
+  forgotPasswordRequested=false;
+  ['f_token','f_pass','f_confirm'].forEach(id=>{if(el(id))el(id).value='';});
+  ['f_email','f_token','f_pass','f_confirm'].forEach((id,i)=>{if(el(id))el(id).disabled=i>0;});
+  if(el('requestResetBtn'))  el('requestResetBtn').style.display='block';
+  if(el('resetPasswordBtn')) el('resetPasswordBtn').style.display='none';
+  const w=el('f_strength_wrap'); if(w) w.style.display='none';
+}
+
+async function doRequestPasswordReset() {
+  const email=v('f_email').trim(), errEl=el('forgotErr'), btn=el('requestResetBtn');
+  errEl.textContent=''; errEl.style.color='#b03030';
+  if (!email||!validateEmail(email)) { errEl.textContent='Please enter a valid email address.'; return; }
+  btn.innerHTML='<span class="spinner"></span>Sending…'; btn.disabled=true;
+  try {
+    const res=await fetch(API_BASE+'?action=forgot_password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    const data=await res.json();
+    if (!data.success) { errEl.textContent=data.message||'Request failed.'; return; }
+    errEl.style.color='#2d7a4f';
+    errEl.textContent='✓ A reset code has been sent if that email exists.';
+    el('f_email').disabled=true; el('f_token').disabled=false;
+    el('f_pass').disabled=false; el('f_confirm').disabled=false;
+    el('requestResetBtn').style.display='none'; el('resetPasswordBtn').style.display='block';
+  } catch(e) { errEl.textContent='Connection error. Please try again.'; }
+  finally { btn.innerHTML='Send reset code'; btn.disabled=false; }
+}
+
+async function doResetPassword() {
+  const email=v('f_email').trim(), token=v('f_token').trim();
+  const password=el('f_pass').value, confirm=el('f_confirm').value;
+  const errEl=el('forgotErr'), btn=el('resetPasswordBtn');
+  errEl.textContent=''; errEl.style.color='#b03030';
+  if (!email||!token||!password||!confirm) { errEl.textContent='Please complete all fields.'; return; }
+  if (password!==confirm) { errEl.textContent='Passwords do not match.'; return; }
+  const pwErr=validatePassword(password); if(pwErr){errEl.textContent=pwErr;return;}
+  btn.innerHTML='<span class="spinner"></span>Resetting…'; btn.disabled=true;
+  try {
+    const res=await fetch(API_BASE+'?action=reset_password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,token,password,confirm_password:confirm})});
+    const data=await res.json();
+    if (!data.success) { errEl.textContent=data.message||'Reset failed.'; return; }
+    errEl.style.color='#2d7a4f';
+    errEl.textContent='✓ Password reset successfully. Please sign in.';
+    await sleep(1500); showLoginForm();
+  } catch(e) { errEl.textContent='Connection error. Please try again.'; }
+  finally { btn.innerHTML='Reset Password'; btn.disabled=false; }
+}
+
+/* ── ADMIN LOGIN / FORGOT ── */
+function showAdminLogin()  { showPage('adminLoginPage'); }
+function showStaffLogin()  { showPage('loginPage'); }
+function toggleAdminForgot() {
+  const w=el('adminForgotWrap');
+  w.style.display=w.style.display==='none'?'block':'none';
+}
+async function doAdminForgotPassword() {
+  const email=v('af_email').trim(), errEl=el('adminForgotErr');
+  errEl.textContent=''; errEl.style.color='#b03030';
+  if (!email||!validateEmail(email)) { errEl.textContent='Please enter a valid email address.'; return; }
+  try {
+    await fetch(API_BASE+'?action=forgot_password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    errEl.style.color='#2d7a4f';
+    errEl.textContent='✓ If that admin email exists, a reset code has been sent.';
+  } catch(e) { errEl.textContent='Connection error.'; }
+}
+
+async function testDBConnection() {
+  try {
+    const res = await fetch(
+      API_BASE + '?action=test_connection',
+      { credentials: 'include' }
+    );
+
+    const data = await res.json();
+
+    if (data.success) {
+      alert('✓ Database connection successful!');
+    } else {
+      alert('Error: ' + data.message);
+    }
+  } catch (e) {
+    alert('Network error: ' + e.message);
+  }
+}
+
+async function doAdminLogin() {
+  const email=v('a_email').trim(), password=el('a_pass').value;
+  const errEl=el('adminLoginErr'), btn=el('adminLoginBtn');
+  errEl.textContent='';
+  if (!email||!password) { errEl.textContent='Email and password are required.'; return; }
+  btn.innerHTML='<span class="spinner"></span>Authenticating…'; btn.disabled=true;
+  try {
+    const res=await fetch(API_BASE+'?action=admin_login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
+    if (!res.ok) {
+      try { const d=await res.json(); errEl.textContent=d.message||`Server error (${res.status}).`; }
+      catch { errEl.textContent=`Server error (${res.status}).`; }
+      return;
+    }
+    const data=await res.json();
+    if (!data.success) { errEl.textContent=data.message||'Login failed.'; return; }
+    adminUser=data.user; adminToken=data.token; initAdminPanel();
+  } catch(e) { errEl.textContent='Connection error. Please try again.'; }
+  finally { btn.innerHTML='Access Admin Panel →'; btn.disabled=false; }
+}
+
+/* ── INIT ── */
+function initApp() {
+  const init=currentUser.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  el('userAvatar').textContent=init; el('userLabel').textContent=currentUser.name;
+  el('profAvatar').textContent=init; el('profName').textContent=currentUser.name;
+  el('profDesg').textContent=currentUser.designation+' — '+currentUser.department;
+  el('edit_name').value=currentUser.name;
+  el('edit_floor').value=currentUser.floor_office;
+  el('edit_designation').value=currentUser.designation;
+  buildProfileGrid(); buildItemGrids();
+  el('ni_date').min=new Date().toISOString().split('T')[0];
+  connectUserSSE();
+  showPage('appPage'); switchTabById('new');
+}
+
+function initAdminPanel() {
+  const init=adminUser.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+  el('adminAvatar').textContent=init; el('adminLabel').textContent=adminUser.name;
+  connectAdminSSE();
+  showPage('adminPage');
+  adminNav('dashboard',document.querySelector('.admin-nav-item'));
+}
+
+function buildItemGrids() {
+  el('newItemGrid').innerHTML=ITEMS.map(it=>`
+    <div class="item-card" id="ni_${it.id}" onclick="toggleNewItem('${it.id}')">
+      <div class="item-icon">${it.icon}</div>${it.label}
+    </div>`).join('');
+
+  el('repairItemList').innerHTML=ITEMS.map(it=>`
+    <div class="repair-item" id="ri_${it.id}" onclick="toggleRepairItem('${it.id}')">
+      <span style="font-size:1.2rem">${it.icon}</span>
+      <span>${it.label}</span>
+      <div class="repair-check" id="rc_${it.id}">✓</div>
+    </div>`).join('');
+}
+
+/* ── NEW ITEM ── */
+function toggleNewItem(id) {
+  if (newItemSelections[id]) {
+    delete newItemSelections[id]; el('ni_'+id)?.classList.remove('selected');
+  } else {
+    const item=ITEMS.find(i=>i.id===id); if(!item) return;
+    newItemSelections[id]={item,quantity:1}; el('ni_'+id)?.classList.add('selected');
+  }
+  renderNewItemForm();
+}
+
+function renderNewItemForm() {
+  const sel=Object.values(newItemSelections), formEl=el('newItemForm');
+  if (!sel.length) { formEl.style.display='none'; return; }
+  formEl.style.display='block'; el('newSuccess').classList.remove('show');
+  el('newItemQtyRows').innerHTML=sel.map(({item})=>`
+    <div style="display:flex;align-items:center;gap:.75rem;padding:.4rem 0;border-bottom:1px solid #f0ede8">
+      <span style="font-size:1.1rem">${item.icon}</span>
+      <span style="flex:1;font-size:.88rem;font-weight:500;color:#1a2f4a">${item.label}</span>
+      <div class="field" style="margin:0;width:90px">
+        <input type="number" min="1" max="99" value="1" id="qty_${item.id}"
+               oninput="updateQty('${item.id}',this.value)"
+               style="text-align:center;padding:.4rem .5rem"/>
+      </div>
+      <button onclick="toggleNewItem('${item.id}')"
+              style="background:none;border:none;cursor:pointer;color:#b03030;font-size:1rem;padding:.2rem .4rem">✕</button>
+    </div>`).join('');
+}
+
+function updateQty(id,val) { if(newItemSelections[id]) newItemSelections[id].quantity=Math.max(1,parseInt(val)||1); }
+
+function resetNewItemForm() {
+  newItemSelections={}; newPrio='med';
+  ITEMS.forEach(it=>el('ni_'+it.id)?.classList.remove('selected'));
+  el('newItemQtyRows').innerHTML=''; el('ni_date').value=''; el('ni_notes').value='';
+  el('newItemForm').style.display='none';
+  const pc=document.querySelector('#tab-new .priority-btns');
+  if (pc) { pc.querySelectorAll('.prio-btn').forEach(b=>b.classList.remove('active','low','med','high')); const m=pc.querySelector('.med'); if(m) m.classList.add('active','med'); }
+}
+
+/* ── REPAIR MULTI-ITEM ── */
+function toggleRepairItem(id) {
+  if (repairSelections[id]) {
+    delete repairSelections[id]; el('ri_'+id)?.classList.remove('selected');
+  } else {
+    const item=ITEMS.find(i=>i.id===id); if(!item) return;
+    repairSelections[id]={item,issue:'',tag:'',date:'',notes:'',photoPath:null};
+    el('ri_'+id)?.classList.add('selected');
+  }
+  renderRepairCards();
+}
+
+function renderRepairCards() {
+  const sel=Object.entries(repairSelections);
+  el('repairFormBottom').style.display=sel.length?'block':'none';
+  el('repSuccess').classList.remove('show');
+  el('repairItemCards').innerHTML=sel.map(([id,data])=>`
+    <div class="repair-card" id="rcard_${id}">
+      <div class="repair-card-header">
+        <div class="repair-card-title"><span>${data.item.icon}</span>${data.item.label}</div>
+        <button class="btn-remove-item" onclick="toggleRepairItem('${id}')">✕ Remove</button>
+      </div>
+      <div class="form-section">
+        <div class="field">
+          <label>Describe the Problem / Damage <span style="color:#b03030">*</span></label>
+          <textarea id="rissue_${id}" placeholder="e.g. Armrest snapped off, drawer won't close…" style="min-height:60px"
+                    oninput="repairSelections['${id}'].issue=this.value">${data.issue}</textarea>
+        </div>
+        <div class="form-two">
+          <div class="field"><label>Asset Tag / ID</label>
+            <input id="rtag_${id}" type="text" placeholder="e.g. AST-2024-089" value="${data.tag}"
+                   oninput="repairSelections['${id}'].tag=this.value"/>
+          </div>
+          <div class="field"><label>Preferred Repair Date</label>
+            <input id="rdate_${id}" type="date" value="${data.date}"
+                   oninput="repairSelections['${id}'].date=this.value"/>
+          </div>
+        </div>
+        <div class="field"><label>Additional Notes</label>
+          <textarea id="rnotes_${id}" placeholder="Any other relevant information…" style="min-height:48px"
+                    oninput="repairSelections['${id}'].notes=this.value">${data.notes}</textarea>
+        </div>
+        <div class="field">
+          <label>Attach Photo <span style="font-weight:400;text-transform:none;font-size:.7rem;color:#a0a09a">(optional · max 5 MB)</span></label>
+          <div class="photo-upload-area" id="photoArea_${id}">
+            <input type="file" accept="image/*" onchange="handlePhotoUpload('${id}',this)"/>
+            ${data.photoPath
+              ? `<img class="photo-thumb" src="${data.photoPath}" style="display:block"/><div style="font-size:.75rem;color:#2d7a4f;margin-top:.3rem">✓ Photo attached</div>`
+              : `<span id="photoLabel_${id}">📷 Click to attach a photo of the damage</span>`}
+          </div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function handlePhotoUpload(itemId,input) {
+  const file=input.files[0]; if(!file) return;
+  const label=el('photoLabel_'+itemId);
+  if(label) label.textContent='Uploading…';
+  try {
+    const fd=new FormData(); fd.append('photo',file);
+    const res=await fetch('/api/upload',{method:'POST',credentials:'include',body:fd});
+    const data=await res.json();
+    if (!data.success) { if(label) label.textContent='Upload failed. Try again.'; return; }
+    repairSelections[itemId].photoPath=data.path;
+    const area=el('photoArea_'+itemId);
+    if (area) area.innerHTML=`<input type="file" accept="image/*" onchange="handlePhotoUpload('${itemId}',this)"/>
+      <img class="photo-thumb" src="${data.path}" style="display:block"/>
+      <div style="font-size:.75rem;color:#2d7a4f;margin-top:.3rem">✓ Photo attached — click to replace</div>`;
+  } catch(e) { if(label) label.textContent='Upload failed. Try again.'; }
+}
+
+function resetRepairForm() {
+  repairSelections={}; repPrio='med';
+  ITEMS.forEach(it=>el('ri_'+it.id)?.classList.remove('selected'));
+  el('repairItemCards').innerHTML=''; el('repairFormBottom').style.display='none';
+  const pc=document.querySelector('#tab-repair .priority-btns');
+  if(pc){pc.querySelectorAll('.prio-btn').forEach(b=>b.classList.remove('active','low','med','high'));const m=pc.querySelector('.med');if(m)m.classList.add('active','med');}
+}
+
+/* ── PRIORITY ── */
+function setPrio(p,btn,type) {
+  btn.parentElement.querySelectorAll('.prio-btn').forEach(b=>b.classList.remove('active','low','med','high'));
+  btn.classList.add('active',p);
+  if(type==='new') newPrio=p; else repPrio=p;
+}
+
+/* ── SUBMIT NEW ITEM ── */
+async function submitNew() {
+  const sel=Object.values(newItemSelections);
+  if (!sel.length) { alert('Please select at least one item.'); return; }
+  const btn=el('newSubmitBtn');
+  btn.innerHTML='<span class="spinner"></span>Submitting…'; btn.disabled=true;
+  try {
+    const items=sel.map(({item,quantity})=>({item_key:item.id,item_label:item.label,quantity}));
+    const res=await fetch(API_BASE+'?action=new_request',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({request_type:'new_item',items,priority:newPrio,required_by:v('ni_date')||null,notes:v('ni_notes').trim()})});
+    const data=await res.json();
+    if (!data.success) { alert('Error: '+(data.message||'Submission failed.')); return; }
+    resetNewItemForm(); el('newSuccess').classList.add('show');
+  } catch(e) { alert('Connection error. Please try again.'); }
+  finally { btn.innerHTML='Submit Request →'; btn.disabled=false; }
+}
+
+/* ── SUBMIT REPAIR ── */
+async function submitRepair() {
+  const sel=Object.entries(repairSelections);
+  if (!sel.length) { alert('Please select at least one item to repair.'); return; }
+  for (const [id,data] of sel) {
+    if (!data.issue.trim()) { alert('Please describe the problem for: '+data.item.label); return; }
+  }
+  const btn=el('repSubmitBtn');
+  btn.innerHTML='<span class="spinner"></span>Submitting…'; btn.disabled=true;
+  try {
+    const items=sel.map(([id,data])=>({
+      item_name:         data.item.label,
+      asset_tag:         data.tag||null,
+      issue_description: data.issue.trim(),
+      notes:             data.notes.trim()||null,
+      preferred_date:    data.date||null,
+      photo_path:        data.photoPath||null,
+    }));
+    const res=await fetch(API_BASE+'?action=new_request',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({request_type:'repair',items,priority:repPrio})});
+    const data=await res.json();
+    if (!data.success) { alert('Error: '+(data.message||'Submission failed.')); return; }
+    resetRepairForm(); el('repSuccess').classList.add('show');
+  } catch(e) { alert('Connection error. Please try again.'); }
+  finally { btn.innerHTML='Submit Repair Request →'; btn.disabled=false; }
+}
+
+/* ── HISTORY ── */
+async function loadHistory() {
+  el('historyList').innerHTML='<div class="empty-state"><span class="spinner spinner-dark"></span> Loading…</div>';
+  try {
+    const res=await fetch(API_BASE+'?action=my_requests',{credentials:'include'});
+    const data=await res.json();
+    renderHistory(data.requests||[]);
+  } catch(e) { el('historyList').innerHTML='<div class="empty-state">Could not load requests. Please try again.</div>'; }
+}
+
+function renderHistory(requests) {
+  if (!requests.length) { el('historyList').innerHTML='<div class="empty-state">No requests yet. Submit a request to see it here.</div>'; return; }
+  el('historyList').innerHTML=requests.map(r=>{
+    const icon=ITEMS.find(i=>i.label===r.item_name)?.icon||'📋';
+    const prioColor=r.priority==='high'?'#b03030':r.priority==='low'?'#2d7a4f':'#c47a2d';
+    let desc;
+    if (r.request_type==='new_item') desc=`Qty: ${r.quantity||1}${r.required_by?' · Needed by: '+r.required_by:''}`;
+    else { const raw=r.issue_description||''; desc=raw.length>70?raw.substring(0,70)+'…':raw; }
+    const noteLine = r.notes?`<p style="font-size:.72rem;color:#6b6560;margin-top:.15rem">Notes: ${r.notes}</p>`:'';
+    const adminMsg = r.admin_notes?`<div style="margin-top:.35rem;padding:.4rem .6rem;background:#f0f5fb;border-radius:5px;font-size:.72rem;color:#2d5e8e"><strong>Facilities:</strong> ${r.admin_notes}</div>`:'';
+    const photoLine= (r.request_type==='repair'&&r.photo_path)?`<div style="margin-top:.3rem"><a href="${r.photo_path}" target="_blank" style="font-size:.72rem;color:#c47a2d">📷 View attached photo</a></div>`:'';
+    return `<div class="req-row" style="flex-direction:column;gap:.4rem">
+      <div style="display:flex;align-items:flex-start;gap:.9rem;width:100%">
+        <span class="req-badge ${r.request_type==='new_item'?'new':'rep'}">${r.request_type==='new_item'?'New Item':'Repair'}</span>
+        <div class="req-info">
+          <strong>${icon} ${r.item_name}</strong>
+          <p>${desc}</p>${noteLine}
+          <p style="margin-top:.2rem;font-size:.72rem;color:${prioColor};font-weight:500">${r.priority.charAt(0).toUpperCase()+r.priority.slice(1)} priority</p>
+        </div>
+        <div class="req-time">${statusBadge(r.status)}<br/>
+          <span style="font-size:.68rem;color:#a0a09a;display:block;margin-top:.3rem">${r.created_at||''}</span>
+        </div>
+      </div>
+      ${trackBar(r.status)}${adminMsg}${photoLine}
+    </div>`;
+  }).join('');
+}
+
+/* ── SETTINGS ── */
+function buildProfileGrid() {
+  const fields=[['Department',currentUser.department],['Floor / Office',currentUser.floor_office],['Designation',currentUser.designation],['Email Address',currentUser.email]];
+  el('profileGrid').innerHTML=fields.map(([l,val])=>`<div class="pfield"><label>${l}</label><p>${val}</p></div>`).join('');
+}
+
+async function saveProfile() {
+  const name=v('edit_name').trim(), floor_office=v('edit_floor').trim(), designation=v('edit_designation').trim();
+  const errEl=el('profileErr'), okEl=el('profileOk'), btn=el('saveProfileBtn');
+  errEl.textContent=''; okEl.style.display='none';
+  if (!name||!floor_office||!designation) { errEl.textContent='All fields are required.'; return; }
+  btn.innerHTML='<span class="spinner"></span>Saving…'; btn.disabled=true;
+  try {
+    const res=await fetch(API_BASE+'?action=update_profile',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,floor_office,designation})});
+    const data=await res.json();
+    if (!data.success) { errEl.textContent=data.message||'Failed to save.'; return; }
+    currentUser=data.user;
+    const init=currentUser.name.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    el('userAvatar').textContent=init; el('userLabel').textContent=currentUser.name;
+    el('profAvatar').textContent=init; el('profName').textContent=currentUser.name;
+    el('profDesg').textContent=currentUser.designation+' — '+currentUser.department;
+    buildProfileGrid();
+    okEl.textContent='✓ Profile updated.'; okEl.style.display='block';
+    setTimeout(()=>{okEl.style.display='none';},3000);
+  } catch(e) { errEl.textContent='Connection error.'; }
+  finally { btn.innerHTML='Save Profile →'; btn.disabled=false; }
+}
+
+async function doChangePassword() {
+  const current=el('cp_current').value, newPw=el('cp_new').value, confirm=el('cp_confirm').value;
+  const errEl=el('changePwErr'), okEl=el('changePwOk'), btn=el('changePwBtn');
+  errEl.textContent=''; okEl.style.display='none';
+  if (!current||!newPw||!confirm) { errEl.textContent='All fields are required.'; return; }
+  if (newPw!==confirm) { errEl.textContent='New passwords do not match.'; return; }
+  const pwErr=validatePassword(newPw); if(pwErr){errEl.textContent=pwErr;return;}
+  btn.innerHTML='<span class="spinner"></span>Changing…'; btn.disabled=true;
+  try {
+    const res=await fetch(API_BASE+'?action=change_password',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({current_password:current,new_password:newPw,confirm_password:confirm})});
+    const data=await res.json();
+    if (!data.success) { errEl.textContent=data.message||'Failed.'; return; }
+    el('cp_current').value=el('cp_new').value=el('cp_confirm').value='';
+    el('cp_strength_wrap').style.display='none';
+    okEl.textContent='✓ Password changed successfully.'; okEl.style.display='block';
+    setTimeout(()=>{okEl.style.display='none';},4000);
+  } catch(e) { errEl.textContent='Connection error.'; }
+  finally { btn.innerHTML='Change Password →'; btn.disabled=false; }
+}
+
+/* ── TAB SWITCHING ── */
+function switchTab(id,btn) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active'); el('tab-'+id).classList.add('active');
+  if (id==='history') loadHistory();
+}
+function switchTabById(id) {
+  const ids=['new','repair','history','settings'];
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('active',ids[i]===id));
+  document.querySelectorAll('.tab-content').forEach(t=>t.classList.remove('active'));
+  el('tab-'+id)?.classList.add('active');
+  if (id==='history') loadHistory();
+}
+function switchSubTab(id,btn) {
+  document.querySelectorAll('.sub-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.sub-tab-content').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active'); el('sub-'+id).classList.add('active');
+}
+
+/* ── LOGOUT ── */
+async function logout() {
+  try { await fetch(API_BASE+'?action=logout',{method:'POST',credentials:'include'}); } catch(e){}
+  if (userSSE) { userSSE.close(); userSSE=null; }
+  currentUser=null; newItemSelections={}; repairSelections={}; newPrio=repPrio='med';
+  showPage('loginPage');
+  ['l_email','l_pass'].forEach(id=>{if(el(id))el(id).value='';});
+  el('loginErr').textContent='';
+  ITEMS.forEach(it=>el('ni_'+it.id)?.classList.remove('selected'));
+  el('repairItemCards').innerHTML=''; el('repairFormBottom').style.display='none';
+  if(el('newItemForm')) el('newItemForm').style.display='none';
+  if(el('newSuccess')) el('newSuccess').classList.remove('show');
+  if(el('repSuccess')) el('repSuccess').classList.remove('show');
+  showLoginForm();
+}
+
+/* ── ADMIN NAV ── */
+function adminNav(section, clickedEl) {
+  document.querySelectorAll('.admin-nav-item').forEach(n=>n.classList.remove('active'));
+  if (clickedEl) clickedEl.classList.add('active');
+  el('panel-dashboard').style.display      = 'none';
+  el('panel-requests').style.display       = 'none';
+  el('panel-admin-settings').style.display = 'none';
+
+  if (section === 'dashboard') {
+    el('panel-dashboard').style.display = 'block';
+    loadDashboard();
+  } else if (section === 'admin_settings') {
+    el('panel-admin-settings').style.display = 'block';
+  } else {
+    el('panel-requests').style.display = 'block';
+    currentPage = 1;
+    currentStatusFilter = section === 'requests' ? '' : section;
+    const titles = {
+      requests:'All Requests', pending:'Pending Review', approved:'Approved',
+      in_progress:'In Progress', completed:'Completed', rejected:'Rejected'
+    };
+    el('panelTitle').textContent = titles[section] || 'Requests';
+    if (section === 'pending') {
+      el('navBadgePending').textContent = '0';
+      el('navBadgePending').style.display = 'none';
+    }
+    applyFilters();
+  }
+}
+
+/* ── ADMIN DASHBOARD ── */
+async function loadDashboard() {
+  el('dashTimestamp').textContent = 'Loading…';
+  try {
+    const res  = await fetch(API_BASE+'?action=dashboard', { headers:{'X-Admin-Token':adminToken} });
+    const data = await res.json();
+    if (!data.success) { el('dashTimestamp').textContent = 'Failed to load.'; return; }
+    renderDashboard(data.stats);
+  } catch(e) { el('dashTimestamp').textContent = 'Error loading dashboard.'; }
+}
+
+function renderDashboard(stats) {
+  const sc    = stats.status_counts;
+  const total = (parseInt(sc.pending)||0)+(parseInt(sc.approved)||0)+(parseInt(sc.in_progress)||0)+(parseInt(sc.completed)||0)+(parseInt(sc.rejected)||0);
+  el('st-total').textContent      = total;
+  el('st-pending').textContent    = parseInt(sc.pending)     || 0;
+  el('st-approved').textContent   = parseInt(sc.approved)    || 0;
+  el('st-inprogress').textContent = parseInt(sc.in_progress) || 0;
+  el('st-completed').textContent  = parseInt(sc.completed)   || 0;
+  el('st-rejected').textContent   = parseInt(sc.rejected)    || 0;
+  el('dashTimestamp').textContent = 'Updated ' + new Date().toLocaleTimeString();
+
+  if ((sc.pending||0) > 0) {
+    el('navBadgePending').textContent    = sc.pending;
+    el('navBadgePending').style.display  = 'inline-block';
+  }
+
+  const tc     = stats.type_counts;
+  const newPct = total ? Math.round((tc.new_item||0)/total*100) : 0;
+  const repPct = total ? Math.round((tc.repair||0)/total*100)   : 0;
+  el('typeChart').innerHTML = `
+    <div style="margin-bottom:.5rem">
+      <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.2rem"><span>📦 New Item</span><span>${tc.new_item||0}</span></div>
+      <div style="background:#e2ddd6;border-radius:4px;height:8px"><div style="background:#2d5a8e;height:8px;border-radius:4px;width:${newPct}%"></div></div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:.75rem;margin-bottom:.2rem"><span>🔧 Repair</span><span>${tc.repair||0}</span></div>
+      <div style="background:#e2ddd6;border-radius:4px;height:8px"><div style="background:#c47a2d;height:8px;border-radius:4px;width:${repPct}%"></div></div>
+    </div>`;
+
+  const depts  = stats.by_department || [];
+  const maxCnt = depts.length ? Math.max(...depts.map(d=>d.cnt)) : 1;
+  el('deptChart').innerHTML = depts.map(d=>`
+    <div style="margin-bottom:.4rem">
+      <div style="display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:.15rem"><span>${d.department}</span><span>${d.cnt}</span></div>
+      <div style="background:#e2ddd6;border-radius:4px;height:6px"><div style="background:#2d5a8e;height:6px;border-radius:4px;width:${Math.round(d.cnt/maxCnt*100)}%"></div></div>
+    </div>`).join('') || '<div style="color:#a0a09a;font-size:.8rem">No data yet</div>';
+
+  el('recentList').innerHTML = (stats.recent||[]).map(r=>{
+    const hasNotes = r.notes || r.issue_description;
+    return `<div style="display:flex;align-items:center;gap:.75rem;padding:.6rem 0;border-bottom:1px solid #f0ede8">
+      <span style="font-size:.72rem;color:#a0a09a;flex-shrink:0;min-width:28px">#${r.id}</span>
+      <div style="flex:1;min-width:0">
+        <div style="font-size:.85rem;font-weight:500;color:#1a2f4a">${r.item_name}</div>
+        <div style="font-size:.72rem;color:#6b6560">${r.requester} · ${r.department}</div>
+        ${hasNotes ? `<div style="font-size:.7rem;color:#a0a09a;margin-top:.1rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px">${r.notes||r.issue_description}</div>` : ''}
+      </div>
+      ${statusBadge(r.status)}
+      <div style="font-size:.68rem;color:#a0a09a;flex-shrink:0;text-align:right;min-width:90px">${r.created_at||''}</div>
+    </div>`;
+  }).join('') || '<div class="empty-state">No recent requests</div>';
+}
+
+/* ── ADMIN REQUESTS TABLE ── */
+function debounceFilter() { clearTimeout(filterDebounce); filterDebounce=setTimeout(()=>{currentPage=1;applyFilters();},350); }
+function applyFilters()   { currentPage=1; loadRequests(); }
+function resetFilters()   { ['f_search','f_type','f_priority','f_dept','f_from','f_to'].forEach(id=>{if(el(id))el(id).value='';}); currentPage=1; loadRequests(); }
+
+async function loadRequests() {
+  el('requestsBody').innerHTML='<tr><td colspan="8" class="empty-state"><span class="spinner spinner-dark"></span> Loading…</td></tr>';
+  try {
+    const p=new URLSearchParams({action:'all_requests',token:adminToken,page:currentPage,per_page:20});
+    if (currentStatusFilter) p.set('status',currentStatusFilter);
+    if (v('f_search'))        p.set('search',    v('f_search'));
+    if (v('f_type'))          p.set('type',      v('f_type'));
+    if (v('f_priority'))      p.set('priority',  v('f_priority'));
+    if (v('f_dept'))          p.set('department',v('f_dept'));
+    if (v('f_from'))          p.set('date_from', v('f_from'));
+    if (v('f_to'))            p.set('date_to',   v('f_to'));
+    const res  = await fetch(API_BASE+'?'+p.toString());
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+    renderRequestsTable(data.requests, data.pagination);
+  } catch(e) {
+    el('requestsBody').innerHTML=`<tr><td colspan="8" class="empty-state" style="color:#b03030">Error: ${e.message}</td></tr>`;
+  }
+}
+
+function renderRequestsTable(rows, pagination) {
+  if (!rows.length) {
+    el('requestsBody').innerHTML='<tr><td colspan="8" class="empty-state">No requests found matching your filters.</td></tr>';
+    el('paginationInfo').textContent='0 requests'; el('pageButtons').innerHTML=''; return;
+  }
+  el('requestsBody').innerHTML = rows.map(r=>`
+    <tr>
+      <td style="color:#a0a09a;font-weight:500">#${r.id}</td>
+      <td>
+        <div style="font-weight:500;font-size:.82rem">${r.requester_name}</div>
+        <div style="font-size:.7rem;color:#a0a09a">${r.department}</div>
+        <div style="font-size:.7rem;color:#a0a09a">${r.floor_office||''}</div>
+      </td>
+      <td>
+        <div style="font-weight:500">${r.item_name}</div>
+        <div style="font-size:.7rem;color:#a0a09a">${r.request_type==='new_item'?'Qty: '+(r.quantity||1):(r.asset_tag||'—')}</div>
+        ${r.notes||r.issue_description
+          ? `<div style="font-size:.7rem;color:#6b6560;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px">${r.notes||r.issue_description}</div>`
+          : ''}
+      </td>
+      <td><span class="req-badge ${r.request_type==='new_item'?'new':'rep'}">${r.request_type==='new_item'?'New Item':'Repair'}</span></td>
+      <td>${priorityDot(r.priority)}</td>
+      <td>${statusBadge(r.status)}</td>
+      <td style="font-size:.75rem;color:#a0a09a;white-space:nowrap">${r.created_at}</td>
+      <td style="white-space:nowrap">
+        <button class="btn-action btn-view" onclick='openModal(${JSON.stringify(r)})'>✏ Update</button>
+        <button class="btn-action btn-delete" onclick="deleteRequest(${r.id})" style="margin-left:4px">🗑</button>
+      </td>
+    </tr>`).join('');
+
+  const pg = pagination;
+  el('paginationInfo').textContent = `${pg.total} request${pg.total!==1?'s':''} · Page ${pg.page} of ${pg.pages}`;
+  let btns = `<button class="page-btn" onclick="goPage(${pg.page-1})" ${pg.page<=1?'disabled':''}>‹</button>`;
+  const start=Math.max(1,pg.page-2), end=Math.min(pg.pages,start+4);
+  for (let i=start;i<=end;i++) btns+=`<button class="page-btn ${i===pg.page?'active':''}" onclick="goPage(${i})">${i}</button>`;
+  btns+=`<button class="page-btn" onclick="goPage(${pg.page+1})" ${pg.page>=pg.pages?'disabled':''}>›</button>`;
+  el('pageButtons').innerHTML = btns;
+}
+
+function goPage(p) { currentPage=p; loadRequests(); }
+
+/* ── ADMIN MODAL — shows full requester data + photo ── */
+function openModal(req) {
+  modalRequestId = req.id;
+  modalSelStatus = req.status;
+
+  /* Detail grid — all requester info */
+  const details = [
+    ['Request ID',    '#'+req.id],
+    ['Requester',     req.requester_name],
+    ['Department',    req.department],
+    ['Floor / Office',req.floor_office||'—'],
+    ['Designation',   req.designation||'—'],
+    ['Email',         req.requester_email],
+    ['Item',          req.item_name],
+    ['Type',          req.request_type==='new_item'?'New Item':'Repair'],
+    ['Priority',      req.priority.charAt(0).toUpperCase()+req.priority.slice(1)],
+    ['Current Status',req.status],
+    ['Submitted',     req.created_at],
+    ['Last Updated',  req.updated_at],
+  ];
+  el('modalDetails').innerHTML = details.map(([l,val])=>
+    `<div class="detail-field">
+       <div class="dlabel">${l}</div>
+       <div class="dval">${l==='Current Status'?statusBadge(req.status):(val||'—')}</div>
+     </div>`
+  ).join('');
+
+  /* Requester notes + issue + extra fields — shown whenever present */
+  const notesBlock = el('modalRequesterNotes');
+  const noteLines  = [];
+  if (req.issue_description) noteLines.push({ label:'Issue Description',   val:req.issue_description });
+  if (req.notes)             noteLines.push({ label:'Requester Notes',      val:req.notes });
+  if (req.asset_tag)         noteLines.push({ label:'Asset Tag / ID',       val:req.asset_tag });
+  if (req.preferred_date)    noteLines.push({ label:'Preferred Repair Date', val:req.preferred_date });
+  if (req.required_by)       noteLines.push({ label:'Required By (Date)',    val:req.required_by });
+  if (req.quantity>1)        noteLines.push({ label:'Quantity',              val:req.quantity });
+
+  if (noteLines.length) {
+    notesBlock.style.display = 'grid';
+    notesBlock.style.gap     = '.5rem';
+    notesBlock.innerHTML = noteLines.map(n=>`
+      <div class="requester-note-block">
+        <div class="note-label">${n.label}</div>
+        <div style="font-size:.88rem;color:#1a1814;margin-top:.15rem">${n.val}</div>
+      </div>`).join('');
+  } else {
+    notesBlock.style.display = 'none';
+  }
+
+  /* Photo — shown when present */
+  const photoBlock = el('modalPhoto');
+  if (req.photo_path) {
+    photoBlock.style.display = 'block';
+    photoBlock.innerHTML = `
+      <div class="requester-note-block" style="border-left-color:#2d7a4f">
+        <div class="note-label">Attached Photo (click to view full size)</div>
+        <a href="${req.photo_path}" target="_blank" rel="noopener">
+          <img src="${req.photo_path}"
+               style="max-width:100%;max-height:180px;border-radius:6px;margin-top:.4rem;object-fit:cover;cursor:zoom-in;display:block"/>
+        </a>
+      </div>`;
+  } else {
+    photoBlock.style.display = 'none';
+  }
+
+  /* Highlight the current status option */
+  document.querySelectorAll('.status-opt').forEach(opt=>{ opt.style.opacity='.45'; opt.style.fontWeight='500'; });
+  const cur = document.querySelector('.sel-'+req.status);
+  if (cur) { cur.style.opacity='1'; cur.style.fontWeight='700'; }
+
+  el('modalNotes').value     = req.admin_notes || '';
+  el('modalErr').textContent = '';
+  el('modalOverlay').classList.remove('hidden');
+}
+
+function closeModal() {
+  el('modalOverlay').classList.add('hidden');
+  modalRequestId = modalSelStatus = null;
+}
+
+function selectStatus(s, btn) {
+  modalSelStatus = s;
+  document.querySelectorAll('.status-opt').forEach(o=>{ o.style.opacity='.45'; o.style.fontWeight='500'; });
+  btn.style.opacity='1'; btn.style.fontWeight='700';
+}
+
+async function saveStatus() {
+  if (!modalSelStatus) { el('modalErr').textContent='Please select a status.'; return; }
+  const notes = v('modalNotes').trim();
+  const btn   = el('modalSaveBtn');
+  btn.innerHTML='<span class="spinner"></span>Saving…'; btn.disabled=true;
+  el('modalErr').textContent='';
+  try {
+    const res=await fetch(API_BASE+'?action=update_status',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Admin-Token':adminToken},
+      body:JSON.stringify({request_id:modalRequestId,status:modalSelStatus,admin_notes:notes})
+    });
+    const data=await res.json();
+    if (!data.success) { el('modalErr').textContent=data.message||'Failed to save.'; return; }
+    closeModal(); loadRequests();
+    showToast(`Request #${modalRequestId||''} updated to <strong>${modalSelStatus}</strong>`, 'success');
+  } catch(e) { el('modalErr').textContent='Error saving. Please try again.'; }
+  finally { btn.innerHTML='Save &amp; Notify →'; btn.disabled=false; }
+}
+
+/* ── DELETE + EXPORT ── */
+async function deleteRequest(id) {
+  if (!confirm(`Delete request #${id}? This cannot be undone.`)) return;
+  try {
+    const res=await fetch(API_BASE+'?action=delete_request',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Admin-Token':adminToken},
+      body:JSON.stringify({request_id:id})
+    });
+    const data=await res.json();
+    if (data.success) { loadRequests(); showToast(`Request #${id} deleted.`,'success'); }
+    else alert('Error: '+data.message);
+  } catch(e) { alert('Connection error.'); }
+}
+
+function exportCSV() {
+  const p=new URLSearchParams({action:'export_csv',token:adminToken});
+  if (currentStatusFilter) p.set('status',currentStatusFilter);
+  if (v('f_search'))        p.set('search',    v('f_search'));
+  if (v('f_type'))          p.set('type',      v('f_type'));
+  if (v('f_priority'))      p.set('priority',  v('f_priority'));
+  if (v('f_dept'))          p.set('department',v('f_dept'));
+  if (v('f_from'))          p.set('date_from', v('f_from'));
+  if (v('f_to'))            p.set('date_to',   v('f_to'));
+  window.open(API_BASE+'?'+p.toString());
+}
+
+/* ── ADMIN CHANGE PASSWORD ── */
+async function doAdminChangePassword() {
+  const current=el('acp_current').value, newPw=el('acp_new').value, confirm=el('acp_confirm').value;
+  const errEl=el('adminChangePwErr'), okEl=el('adminChangePwOk'), btn=el('adminChangePwBtn');
+  errEl.textContent=''; okEl.style.display='none';
+  if (!current||!newPw||!confirm) { errEl.textContent='All fields are required.'; return; }
+  if (newPw!==confirm) { errEl.textContent='New passwords do not match.'; return; }
+  const pwErr=validatePassword(newPw); if(pwErr){errEl.textContent=pwErr;return;}
+  btn.innerHTML='<span class="spinner"></span>Changing…'; btn.disabled=true;
+  try {
+    const res=await fetch(API_BASE+'?action=admin_change_password',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Admin-Token':adminToken},
+      body:JSON.stringify({current_password:current,new_password:newPw,confirm_password:confirm})
+    });
+    const data=await res.json();
+    if (!data.success) { errEl.textContent=data.message||'Failed.'; return; }
+    el('acp_current').value=el('acp_new').value=el('acp_confirm').value='';
+    el('acp_strength_wrap').style.display='none';
+    okEl.textContent='✓ Password changed successfully.'; okEl.style.display='block';
+    setTimeout(()=>{okEl.style.display='none';},4000);
+    showToast('Admin password changed successfully.','success');
+  } catch(e) { errEl.textContent='Connection error.'; }
+  finally { btn.innerHTML='Change Password →'; btn.disabled=false; }
+}
+
+function adminLogout() {
+  if (adminSSE) { adminSSE.close(); adminSSE=null; }
+  adminUser=adminToken=null;
+  showPage('adminLoginPage');
+  el('a_email').value=el('a_pass').value='';
+  el('adminLoginErr').textContent='';
+}
+
+/* ── GLOBAL EVENT LISTENERS ── */
+el('modalOverlay').addEventListener('click', function(e){ if(e.target===this) closeModal(); });
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  el('l_pass')?.addEventListener('keydown',    e=>{ if(e.key==='Enter') doLogin(); });
+  el('a_pass')?.addEventListener('keydown',    e=>{ if(e.key==='Enter') doAdminLogin(); });
+  el('r_confirm')?.addEventListener('keydown', e=>{ if(e.key==='Enter') doRegister(); });
+  el('f_confirm')?.addEventListener('keydown', e=>{ if(e.key==='Enter') doResetPassword(); });
+  document.addEventListener('keydown',         e=>{ if(e.key==='Escape'&&!el('modalOverlay').classList.contains('hidden')) closeModal(); });
+});
+</script>
+</body>
+</html>
