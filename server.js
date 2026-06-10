@@ -53,6 +53,7 @@ const helmet       = require('helmet');
 const multer       = require('multer');
 
 const app  = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 // =============================================================
@@ -229,10 +230,10 @@ app.use(session({
   resave:            false,
   saveUninitialized: false,
   cookie: {
-    secure:   process.env.NODE_ENV === 'production', // true in prod (HTTPS)
+    secure:   true, // true in prod (HTTPS)
     httpOnly: true,
     maxAge:   86400000,
-    sameSite: 'lax',
+    sameSite: 'none',
   },
 }));
 
