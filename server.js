@@ -419,6 +419,7 @@ async function route(req, res) {
       case 'new_request':           return await handleNewRequest(req, res);
       case 'my_requests':           return await handleMyRequests(req, res);
       case 'dashboard':             return await handleDashboard(req, res);
+      case 'all_requests':          return await handleAllRequests(req, res);
       case 'update_status':         return await handleUpdateStatus(req, res);
       case 'delete_request':        return await handleDeleteRequest(req, res);
       case 'export_csv':            return await handleExportCSV(req, res);
@@ -1279,6 +1280,36 @@ async function handleExportCSV(req, res) {
       params.push(q, q, q);
     }
 
+    const [rows] = await conn.execute(
+      `SELECT mr.id AS ID, u.name AS Requester, u.department AS Department,
+              u.floor_office AS 'Floor/Office', u.email AS Email,
+              mr.item_name AS Item, mr.request_type AS Type,
+              mr.quantity AS Quantity, mr.priority AS Priority,
+              mr.status AS Status, mr.issue_description AS Issue,
+              mr.asset_tag AS 'Asset Tag', mr.required_by AS 'Required By',
+              mr.preferred_date AS 'Preferred Date',
+              mr.notes AS Notes, mr.admin_notes AS 'Admin Notes',
+              mr.created_at AS Submitted
+       FROM maintenance_requests mr JOIN users u ON u.id = mr.user_id
+       WHERE ${conditions.join(' AND ')} ORDER BY mr.created_at DESC`,
+      params
+    );
+
+    const headers = rows.length ? Object.keys(rows[0]) : ['No data'];
+    const csv = [
+      headers.map(h => `"${h}"`).join(','),
+      ...rows.map(row =>
+        headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`).join(',')
+      )
+    ].join('\n');
+
+    const filename = `requests_${new Date().toISOString().slice(0, 10)}.csv`;
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    return res.send(csv);
+  } finally { conn.release(); }
+}
+
   const [rows] = await conn.execute(
   `SELECT mr.id, mr.request_type, mr.item_name, mr.quantity, mr.required_by,
           mr.asset_tag, mr.issue_description, mr.preferred_date,
@@ -1307,8 +1338,8 @@ async function handleExportCSV(req, res) {
     res.setHeader('Content-Type', 'text/csv');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     return res.send(csv);
-  } finally { conn.release(); }
-}
+   
+  
 
 // =============================================================
 // CATCH-ALL — serve index.html
