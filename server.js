@@ -1309,38 +1309,6 @@ async function handleExportCSV(req, res) {
     return res.send(csv);
   } finally { conn.release(); }
 }
-
-  const [rows] = await conn.execute(
-  `SELECT mr.id, mr.request_type, mr.item_name, mr.quantity, mr.required_by,
-          mr.asset_tag, mr.issue_description, mr.preferred_date,
-          mr.priority, mr.status, mr.notes, mr.admin_notes,
-          mr.photo_path,
-          DATE_FORMAT(mr.created_at, '%d %b %Y %H:%i') AS created_at,
-          DATE_FORMAT(mr.updated_at, '%d %b %Y %H:%i') AS updated_at,
-          u.id AS user_id, u.name AS requester_name, u.department,
-          u.floor_office, u.email AS requester_email, u.designation
-   FROM maintenance_requests mr JOIN users u ON u.id = mr.user_id
-   WHERE ${where}
-   ORDER BY FIELD(mr.priority,'high','med','low'), mr.created_at DESC
-   LIMIT ${parseInt(per_page)} OFFSET ${parseInt(offset)}`, // <-- Injected cleanly here
-  params // <-- Send only the search parameters here
-);
-
-    const headers  = rows.length ? Object.keys(rows[0]) : ['No data'];
-    const csv = [
-      headers.map(h => `"${h}"`).join(','),
-      ...rows.map(row =>
-        headers.map(h => `"${String(row[h] ?? '').replace(/"/g, '""')}"`).join(',')
-      )
-    ].join('\n');
-
-    const filename = `requests_${new Date().toISOString().slice(0, 10)}.csv`;
-    res.setHeader('Content-Type', 'text/csv');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    return res.send(csv);
-   
-  
-
 // =============================================================
 // CATCH-ALL — serve index.html
 // =============================================================
