@@ -1120,6 +1120,7 @@ async function handleAllRequests(req, res) {
     const perPageNum = Math.max(1, parseInt(per_page) || 20);
     const offset     = (pageNum - 1) * perPageNum;
 
+    console.log('DEBUG params:', JSON.stringify([...params, perPageNum, offset], null, 2));
     const [[{ total }]] = await conn.execute(
       `SELECT COUNT(*) AS total FROM maintenance_requests mr JOIN users u ON u.id = mr.user_id WHERE ${where}`,
       params
