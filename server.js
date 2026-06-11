@@ -87,7 +87,7 @@ const pool = mysql.createPool({
   ...DB,
   charset:            'utf8mb4',
   waitForConnections: true,
-  connectionLimit:    10,
+  connectionLimit:    4,
   queueLimit:         0,
 });
 
@@ -230,10 +230,10 @@ app.use(session({
   resave:            false,
   saveUninitialized: false,
   cookie: {
-    secure:   true, // true in prod (HTTPS)
+    secure:   process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge:   86400000,
-    sameSite: 'none',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
   },
 }));
 
@@ -427,8 +427,7 @@ async function route(req, res) {
         return err(res, `Unknown action: "${action}"`, 404);
     }
   } catch (e) {
-    console.error(`[ERROR] action=${action}:`);
-    console.error(e);
+    console.error(`[ERROR] action=${action}:`, e.message);
     return err(res, 'Server error: ' + e.message, 500);
   }
 }
@@ -1116,12 +1115,11 @@ async function handleAllRequests(req, res) {
       params.push(q, q, q, q, q);
     }
 
-    const where  = conditions.join(' AND ');
+    const where      = conditions.join(' AND ');
     const pageNum    = Math.max(1, parseInt(page)     || 1);
     const perPageNum = Math.max(1, parseInt(per_page) || 20);
     const offset     = (pageNum - 1) * perPageNum;
 
-    console.log('PAGINATION PARAMS:', { page, per_page, pageNum, perPageNum, offset, params });
     const [[{ total }]] = await conn.execute(
       `SELECT COUNT(*) AS total FROM maintenance_requests mr JOIN users u ON u.id = mr.user_id WHERE ${where}`,
       params
@@ -1140,17 +1138,17 @@ async function handleAllRequests(req, res) {
        WHERE ${where}
        ORDER BY FIELD(mr.priority,'high','med','low'), mr.created_at DESC
        LIMIT ? OFFSET ?`,
-      [...params, Number(perPageNum), Number(offset)]
+      [...params, perPageNum, offset]
     );
 
     return ok(res, {
       requests: rows,
       pagination: {
-        total: parseInt(total),
-        page: pageNum,
+        total:    parseInt(total),
+        page:     pageNum,
         per_page: perPageNum,
-        pages: Math.max(1, Math.ceil(total / perPageNum)),
-}
+        pages:    Math.max(1, Math.ceil(total / perPageNum)),
+      }
     });
   } finally { conn.release(); }
 }
@@ -1285,7 +1283,7 @@ async function handleExportCSV(req, res) {
               u.floor_office AS 'Floor/Office', u.email AS Email,
               mr.item_name AS Item, mr.request_type AS Type,
               mr.quantity AS Quantity, mr.priority AS Priority,
-              mr.status AS Status, mr.issue_description AS Issue,
+              mr.status AS Status, mr.issue_description AS 'Issue',
               mr.asset_tag AS 'Asset Tag', mr.required_by AS 'Required By',
               mr.preferred_date AS 'Preferred Date',
               mr.notes AS Notes, mr.admin_notes AS 'Admin Notes',
@@ -1295,7 +1293,7 @@ async function handleExportCSV(req, res) {
       params
     );
 
-    const headers = rows.length ? Object.keys(rows[0]) : ['No data'];
+    const headers  = rows.length ? Object.keys(rows[0]) : ['No data'];
     const csv = [
       headers.map(h => `"${h}"`).join(','),
       ...rows.map(row =>
@@ -1309,6 +1307,7 @@ async function handleExportCSV(req, res) {
     return res.send(csv);
   } finally { conn.release(); }
 }
+
 // =============================================================
 // CATCH-ALL — serve index.html
 // =============================================================
