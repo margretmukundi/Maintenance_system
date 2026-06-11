@@ -89,6 +89,8 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit:    4,
   queueLimit:         0,
+  namedPlaceholders:  false,
+  typeCast:           true,
 });
 
 // =============================================================
@@ -1138,8 +1140,8 @@ async function handleAllRequests(req, res) {
        FROM maintenance_requests mr JOIN users u ON u.id = mr.user_id
        WHERE ${where}
        ORDER BY FIELD(mr.priority,'high','med','low'), mr.created_at DESC
-       LIMIT ? OFFSET ?`,
-      [...params, perPageNum, offset]
+        LIMIT ${perPageNum} OFFSET ${offset}`,
+        params
     );
 
     return ok(res, {
