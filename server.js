@@ -419,7 +419,6 @@ async function route(req, res) {
       case 'new_request':           return await handleNewRequest(req, res);
       case 'my_requests':           return await handleMyRequests(req, res);
       case 'dashboard':             return await handleDashboard(req, res);
-      case 'all_requests':          return await handleAllRequests(req, res);
       case 'update_status':         return await handleUpdateStatus(req, res);
       case 'delete_request':        return await handleDeleteRequest(req, res);
       case 'export_csv':            return await handleExportCSV(req, res);
@@ -1140,7 +1139,7 @@ async function handleAllRequests(req, res) {
        WHERE ${where}
        ORDER BY FIELD(mr.priority,'high','med','low'), mr.created_at DESC
        LIMIT ? OFFSET ?`,
-      [...params, perPageNum, offset]
+      [...params, Number(perPageNum), Number(offset)]
     );
 
     return ok(res, {
