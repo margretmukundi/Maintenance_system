@@ -97,10 +97,13 @@ const pool = mysql.createPool({
 // MAILER
 // =============================================================
 const transporter = MAIL.USER ? nodemailer.createTransport({
-  host:   MAIL.HOST,
-  port:   MAIL.PORT,
-  secure: false,
-  auth:   { user: MAIL.USER, pass: MAIL.PASS },
+  host:   'smtp.sendgrid.net',
+  port:   465,
+  secure: true,
+  auth: {.
+    user: 'apikey',
+    pass: process.env.SENDGRID_API_KEY,
+  },
 }) : null;
 
 //hourly cleanup of tokens
