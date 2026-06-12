@@ -97,15 +97,14 @@ const pool = mysql.createPool({
 // MAILER
 // =============================================================
 const transporter = MAIL.USER ? nodemailer.createTransport({
-  host:   'smtp.respond.com',
+  host:   'smtp.gmail.com',
   port:   465,
   secure: true,
   auth: {
-    user: 'resend',
-    pass: process.env.RESEND_API_KEY,
+    user: process.env.MAIL_USER,
+    pass: process.env.MAIL_PASS,
   },
 }) : null;
-
 //hourly cleanup of tokens
 setInterval(async () => {
   pool.execute('DELETE FROM admin_tokens WHERE expires_at <= NOW()').catch(() => {});
