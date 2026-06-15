@@ -896,11 +896,6 @@ async function doLogin() {
   try {
     const res  = await fetch(API_BASE+'?action=login',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
     const data = await res.json();
-    if (data.needs_verification) {
-      pendingUserId=data.user_id;
-      el('verifyEmailDisplay').textContent=email;
-      showPage('verifyPage'); el('otp0').focus(); return;
-    }
     if (!data.success) { errEl.textContent=data.message||'Login failed.'; return; }
     currentUser=data.user; initApp();
   } catch(e) { errEl.textContent='Connection error. Please check your network.'; }
@@ -921,9 +916,8 @@ async function doRegister() {
     const res  = await fetch(API_BASE+'?action=register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,department,floor_office,designation,email,password})});
     const data = await res.json();
     if (!data.success) { errEl.textContent=data.message||'Registration failed.'; return; }
-    pendingUserId=data.user_id;
-    el('verifyEmailDisplay').textContent=email;
-    showPage('verifyPage'); el('otp0').focus();
+    showToast('Account created successfully! Please sign in.', 'success');
+    showLoginForm();
   } catch(e) { errEl.textContent='Connection error. Please try again.'; }
   finally { btn.innerHTML='Create Account →'; btn.disabled=false; }
 }

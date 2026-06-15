@@ -412,8 +412,6 @@ async function route(req, res) {
       case 'login':                 return await handleLogin(req, res);
       case 'logout':                return await handleLogout(req, res);
       case 'register':              return await handleRegister(req, res);
-      case 'verify_email':          return await handleVerifyEmail(req, res);
-      case 'resend_verification':   return await handleResendVerification(req, res);
       case 'forgot_password':       return await handleForgotPassword(req, res);
       case 'reset_password':        return await handleResetPassword(req, res);
       case 'change_password':       return await handleChangePassword(req, res);
@@ -478,109 +476,10 @@ async function handleRegister(req, res) {
     const [result] = await conn.execute(
       'INSERT INTO users (name, department, floor_office, designation, email, password_hash, role, email_verified) VALUES (?,?,?,?,?,?,?,?)',
       [name.trim(), department, floor_office.trim(), designation.trim(),
-       email.toLowerCase().trim(), hash, 'user', 0]
+       email.toLowerCase().trim(), hash, 'user', 1]
     );
     const userId = result.insertId;
-
-    // Generate 6-digit verification code
-    const code    = String(crypto.randomInt(100000, 1000000));
-
-    await conn.execute(
-      `INSERT INTO email_verification_tokens (user_id, token, expires_at) VALUES (?,?, DATE_ADD(NOW(), INTERVAL 30 MINUTE)) ON DUPLICATE KEY UPDATE token=VALUES(token), expires_at = DATE_ADD(NOW(), INTERVAL 30 MINUTE)`,
-      [userId, code]
-    );
-
-    sendMail({
-      to: email,
-      subject: 'Verify your email — Office Maintenance System',
-      html: emailWrap('Verify Your Email', `
-        <p>Hi <strong>${name.trim()}</strong>,</p>
-        <p>Your account has been created. Enter the code below to activate it.</p>
-        <div style="text-align:center;margin:24px 0">
-          <div style="font-size:2rem;font-weight:700;letter-spacing:.2em;color:#1a2f4a;background:#f0f5fb;padding:1rem;border-radius:8px">${code}</div>
-        </div>
-        <p style="color:#6b6560;font-size:.85rem">This code expires in 30 minutes. If you didn't sign up, ignore this email.</p>
-      `),
-    });
-
-    return ok(res, {
-      message:    'Account created. Check your email for a verification code.',
-      user_id:    userId,
-      needs_verification: true,
-    });
-  } finally { conn.release(); }
-}
-
-// =============================================================
-// ACTION: verify_email
-// =============================================================
-async function handleVerifyEmail(req, res) {
-  const { user_id, code } = req.body;
-  if (!user_id || !code) return err(res, 'user_id and code are required.');
-
-  const conn = await db();
-  try {
-    const [rows] = await conn.execute(
-      'SELECT id FROM email_verification_tokens WHERE user_id = ? AND token = ? AND expires_at > NOW()',
-      [user_id, code.trim()]
-    );
-    if (!rows.length) return err(res, 'Invalid or expired verification code.');
-
-    await conn.execute('UPDATE users SET email_verified = 1 WHERE id = ?', [user_id]);
-    await conn.execute('DELETE FROM email_verification_tokens WHERE user_id = ?', [user_id]);
-
-    // Auto-login after verification
-    const [userRows] = await conn.execute(
-      'SELECT id, name, department, floor_office, designation, email, role FROM users WHERE id = ?', [user_id]
-    );
-    const user = userRows[0];
-    req.session.userId = user.id;
-    await new Promise((resolve, reject) => {
-    req.session.save(err => {
-    if (err) reject(err);
-    else resolve();
-      });
-    });
-
-    return ok(res, { message: 'Email verified. Welcome!', user });
-  } finally { conn.release(); }
-}
-
-// =============================================================
-// ACTION: resend_verification
-// =============================================================
-async function handleResendVerification(req, res) {
-  const { user_id } = req.body;
-  if (!user_id) return err(res, 'user_id is required.');
-
-  const conn = await db();
-  try {
-    const [rows] = await conn.execute(
-      'SELECT id, name, email FROM users WHERE id = ? AND email_verified = 0', [user_id]
-    );
-    if (!rows.length) return err(res, 'Account not found or already verified.');
-
-    const code    = String(crypto.randomInt(100000, 1000000));
-    
-
-    await conn.execute(
-      'INSERT INTO email_verification_tokens (user_id, token, expires_at) VALUES (?,?, DATE_ADD(NOW(), INTERVAL 30 MINUTE)) ON DUPLICATE KEY UPDATE token=VALUES(token), expires_at=DATE_ADD(NOW(), INTERVAL 30 MINUTE)',
-      [user_id, code]
-    );
-
-    sendMail({
-      to: rows[0].email,
-      subject: 'New Verification Code — Office Maintenance System',
-      html: emailWrap('New Verification Code', `
-        <p>Hi <strong>${rows[0].name}</strong>, here is your new code:</p>
-        <div style="text-align:center;margin:24px 0">
-          <div style="font-size:2rem;font-weight:700;letter-spacing:.2em;color:#1a2f4a;background:#f0f5fb;padding:1rem;border-radius:8px">${code}</div>
-        </div>
-        <p style="color:#6b6560;font-size:.85rem">Expires in 30 minutes.</p>
-      `),
-    });
-
-    return ok(res, { message: 'New verification code sent.' });
+   return ok(res, { message: 'Account created successfully. Please sign in.', user_id: userId });
   } finally { conn.release(); }
 }
 
@@ -604,16 +503,6 @@ async function handleLogin(req, res) {
 
     const match = await bcrypt.compare(password, user.password_hash);
     if (!match) return err(res, 'Incorrect password. Please try again.', 401);
-
-    if (!user.email_verified) {
-      return res.json({
-        success: false,
-        needs_verification: true,
-        user_id: user.id,
-        message: 'Please verify your email before logging in.',
-      });
-    }
-
     req.session.userId = user.id;
     await new Promise((resolve, reject) => {
     req.session.save(err => {
