@@ -87,7 +87,7 @@ const pool = mysql.createPool({
   ...DB,
   charset:            'utf8mb4',
   waitForConnections: true,
-  connectionLimit:    4,
+  connectionLimit:    2,
   queueLimit:         0,
   namedPlaceholders:  false,
   typeCast:           true,
@@ -1222,15 +1222,16 @@ async function start() {
     conn = await pool.getConnection();
     await conn.execute('SELECT 1');
     console.log('✅ Database connected: maintenance_db');
+  try {
+    conn = await pool.getConnection();
+    await conn.execute('SELECT 1');
+    console.log('✅ Database connected: maintenance_db');
   } catch (e) {
-    console.error('❌ Database connection FAILED:', e.message);
-    if (e.code === 'ECONNREFUSED')        console.error('   → MySQL is not running.');
-    if (e.code === 'ER_BAD_DB_ERROR')     console.error('   → Import database.sql into phpMyAdmin first.');
-    if (e.code === 'ER_ACCESS_DENIED_ERROR') console.error('   → Wrong DB user/password.');
+    console.error('⚠️ Database connection warning:', e.message);
+    console.error('   Server will continue and retry on first request.');
   } finally {
     if (conn) conn.release();
   }
-
   // Try listening, with a small fallback if the port is in use to provide
   // a clearer error message and optionally attempt the next ports.
   function tryListen(port, attempts = 3) {
@@ -1262,4 +1263,4 @@ async function start() {
 }
 
 start();
-// force redeploy
+}
