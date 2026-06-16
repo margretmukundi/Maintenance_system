@@ -1222,18 +1222,13 @@ async function start() {
     conn = await pool.getConnection();
     await conn.execute('SELECT 1');
     console.log('✅ Database connected: maintenance_db');
-  try {
-    conn = await pool.getConnection();
-    await conn.execute('SELECT 1');
-    console.log('✅ Database connected: maintenance_db');
   } catch (e) {
     console.error('⚠️ Database connection warning:', e.message);
     console.error('   Server will continue and retry on first request.');
   } finally {
     if (conn) conn.release();
   }
-  // Try listening, with a small fallback if the port is in use to provide
-  // a clearer error message and optionally attempt the next ports.
+
   function tryListen(port, attempts = 3) {
     const server = app.listen(port, () => {
       console.log(`✅ Server running at: http://localhost:${port}`);
@@ -1250,7 +1245,7 @@ async function start() {
           setTimeout(() => tryListen(next, attempts - 1), 300);
           return;
         }
-        console.error('No available ports found. Please stop the process using the port or set a different PORT.');
+        console.error('No available ports found.');
         process.exit(1);
       } else {
         console.error('Server error:', err && err.message ? err.message : err);
@@ -1263,4 +1258,3 @@ async function start() {
 }
 
 start();
-}
