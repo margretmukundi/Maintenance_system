@@ -423,6 +423,9 @@ async function route(req, res) {
       case 'dashboard':             return await handleDashboard(req, res);
       case 'all_requests':          return await handleAllRequests(req, res);
       case 'update_status':         return await handleUpdateStatus(req, res);
+      case 'assign_technician':     return await handleAssignTechnician(req, res);
+      case 'technician_feedback':   return await handleTechnicianFeedback(req, res);
+      case 'my_assignments':        return await handleMyAssignments(req, res);
       case 'delete_request':        return await handleDeleteRequest(req, res);
       case 'export_csv':            return await handleExportCSV(req, res);
       default:
@@ -715,9 +718,9 @@ async function handleAdminLogin(req, res) {
       'SELECT id, name, department, floor_office, designation, email, password_hash, role, is_active FROM users WHERE email = ?',
       [email.toLowerCase().trim()]
     );
-    if (!rows.length) return err(res, 'No admin account found with this email.', 401);
+    if (!rows.length) return err(res, 'No account found with this email.', 401);
     const user = rows[0];
-    if (user.role !== 'admin') return err(res, 'This account does not have admin access.', 403);
+    if (!['admin','technician'].includes(user.role)) return err(res, 'This account does not have staff access.', 403);
     if (!user.is_active) return err(res, 'This account is deactivated.', 403);
 
     const match = await bcrypt.compare(password, user.password_hash);
@@ -916,6 +919,7 @@ async function handleMyRequests(req, res) {
     const [rows] = await conn.execute(
       `SELECT id, request_type, item_name, quantity, required_by,
               asset_tag, issue_description, preferred_date, photo_path,
+              assigned_to, dept_head_signoff,
               priority, notes, status, admin_notes,
               DATE_FORMAT(created_at, '%d %b %Y %H:%i') AS created_at,
               DATE_FORMAT(updated_at, '%d %b %Y %H:%i') AS updated_at
@@ -1023,7 +1027,8 @@ async function handleAllRequests(req, res) {
       `SELECT mr.id, mr.request_type, mr.item_name, mr.quantity, mr.required_by,
               mr.asset_tag, mr.issue_description, mr.preferred_date,
               mr.priority, mr.status, mr.notes, mr.admin_notes,
-              mr.photo_path,
+              mr.photo_path, mr.assigned_to, mr.dept_head_signoff, mr.signed_off_at,
+              mr.tech_status, mr.tech_comment,
               DATE_FORMAT(mr.created_at, '%d %b %Y %H:%i') AS created_at,
               DATE_FORMAT(mr.updated_at, '%d %b %Y %H:%i') AS updated_at,
               u.id AS user_id, u.name AS requester_name, u.department,
@@ -1121,6 +1126,194 @@ async function handleUpdateStatus(req, res) {
 }
 
 // =============================================================
+// ACTION: assign_technician  (admin only)
+// Saves the assigned_to name and/or dept_head_signoff name
+// against a request. Both fields are free-text — no automation.
+// Either field may be omitted (null clears it).
+// =============================================================
+async function handleAssignTechnician(req, res) {
+  const token = req.headers['x-admin-token'];
+  if (!token) return err(res, 'Admin token required.', 401);
+
+  const { request_id, assigned_to, dept_head_signoff } = req.body;
+  if (!request_id) return err(res, 'request_id is required.');
+
+  const conn = await db();
+  try {
+    const [tRows] = await conn.execute(
+      'SELECT user_id FROM admin_tokens WHERE token = ? AND expires_at > NOW()', [token]
+    );
+    if (!tRows.length) return err(res, 'Invalid or expired admin token.', 401);
+    const adminId = tRows[0].user_id;
+
+    const [rows] = await conn.execute(
+      `SELECT mr.*, u.name AS requester_name, u.email AS requester_email
+       FROM maintenance_requests mr JOIN users u ON u.id = mr.user_id
+       WHERE mr.id = ?`,
+      [request_id]
+    );
+    if (!rows.length) return err(res, 'Request not found.', 404);
+
+    // Determine whether a new dept-head sign-off is being recorded
+    const req_   = rows[0];
+    const newSignoff = (dept_head_signoff || '').trim();
+    const hadSignoff = !!req_.dept_head_signoff;
+    const signedOffAt = newSignoff
+      ? (hadSignoff ? req_.signed_off_at : new Date().toISOString().slice(0, 19).replace('T', ' '))
+      : null;
+
+    await conn.execute(
+      `UPDATE maintenance_requests
+       SET assigned_to = ?, dept_head_signoff = ?, signed_off_at = ?, updated_at = NOW()
+       WHERE id = ?`,
+      [
+        (assigned_to || '').trim() || null,
+        newSignoff || null,
+        signedOffAt,
+        request_id,
+      ]
+    );
+
+    // Notify requester by email only when a technician is being assigned for the first time
+    const newAssignee = (assigned_to || '').trim();
+    if (newAssignee && !req_.assigned_to) {
+      sendMail({
+        to: req_.requester_email, requestId: request_id,
+        subject: `[#${request_id}] A technician has been assigned — ${esc(req_.item_name)}`,
+        html: emailWrap('Technician Assigned', `
+          <p>Hi <strong>${esc(req_.requester_name)}</strong>,</p>
+          <p>A team member has been assigned to your maintenance request.</p>
+          <div class="lbl">Request ID</div><div class="val">#${request_id}</div>
+          <div class="lbl">Item</div><div class="val">${esc(req_.item_name)}</div>
+          <div class="lbl">Assigned To</div><div class="val"><strong>${esc(newAssignee)}</strong></div>
+          ${newSignoff ? `<div class="lbl">Authorised By (Dept Head)</div><div class="val">${esc(newSignoff)}</div>` : ''}
+          ${trackHtml(req_.status)}
+          <p style="margin-top:16px">Visit <a href="${APP_URL}">${APP_URL}</a> to track your request.</p>
+        `),
+      });
+    }
+
+    // SSE push so admin table refreshes
+    pushToAdmins('assignment_update', { request_id: parseInt(request_id), assigned_to: newAssignee || null, dept_head_signoff: newSignoff || null });
+
+    return ok(res, { message: 'Assignment saved successfully.' });
+  } finally { conn.release(); }
+}
+
+// =============================================================
+// ACTION: technician_feedback  (technician or admin)
+// The assigned person updates their job status + optional comment.
+// tech_status: 'in_progress' | 'done' | 'cannot_do'
+// =============================================================
+async function handleTechnicianFeedback(req, res) {
+  const token = req.headers['x-admin-token'];
+  if (!token) return err(res, 'Token required.', 401);
+
+  const { request_id, tech_status, tech_comment = '' } = req.body;
+  const validStatuses = ['in_progress', 'done', 'cannot_do'];
+  if (!request_id)                      return err(res, 'request_id is required.');
+  if (!validStatuses.includes(tech_status)) return err(res, 'Invalid tech_status. Must be: in_progress, done, or cannot_do.');
+
+  const conn = await db();
+  try {
+    const [tRows] = await conn.execute(
+      `SELECT at.user_id, u.name, u.role
+       FROM admin_tokens at JOIN users u ON u.id = at.user_id
+       WHERE at.token = ? AND at.expires_at > NOW()`,
+      [token]
+    );
+    if (!tRows.length) return err(res, 'Invalid or expired token.', 401);
+    const caller = tRows[0];
+
+    // Fetch request
+    const [rows] = await conn.execute(
+      `SELECT mr.*, u.name AS requester_name, u.email AS requester_email
+       FROM maintenance_requests mr JOIN users u ON u.id = mr.user_id
+       WHERE mr.id = ?`,
+      [request_id]
+    );
+    if (!rows.length) return err(res, 'Request not found.', 404);
+    const req_ = rows[0];
+
+    // Technicians can only update requests assigned to them (by name match)
+    if (caller.role === 'technician') {
+      if (!req_.assigned_to || req_.assigned_to.toLowerCase() !== caller.name.toLowerCase()) {
+        return err(res, 'You can only update requests assigned to you.', 403);
+      }
+    }
+
+    await conn.execute(
+      `UPDATE maintenance_requests
+       SET tech_status = ?, tech_comment = ?, updated_at = NOW()
+       WHERE id = ?`,
+      [tech_status, tech_comment.trim() || null, request_id]
+    );
+
+    const labels = { in_progress: 'In Progress', done: 'Done ✓', cannot_do: 'Cannot Do It' };
+
+    // Notify admin by SSE
+    pushToAdmins('tech_feedback', {
+      request_id: parseInt(request_id),
+      tech_status,
+      tech_comment: tech_comment.trim() || null,
+      technician: caller.name,
+    });
+
+    // Email the admin to let them know
+    sendMail({
+      to: process.env.ADMIN_EMAIL, requestId: request_id,
+      subject: `[#${request_id}] Technician feedback: ${labels[tech_status]} — ${esc(req_.item_name)}`,
+      html: emailWrap('Technician Feedback Received', `
+        <p>Hi Admin,</p>
+        <p>The assigned technician has submitted feedback for request <strong>#${request_id}</strong>.</p>
+        <div class="lbl">Item</div><div class="val">${esc(req_.item_name)}</div>
+        <div class="lbl">Requester</div><div class="val">${esc(req_.requester_name)}</div>
+        <div class="lbl">Technician</div><div class="val">${esc(req_.assigned_to||caller.name)}</div>
+        <div class="lbl">Job Status</div><div class="val"><strong>${labels[tech_status]}</strong></div>
+        ${tech_comment ? `<div class="lbl">Comment</div><div class="val">${esc(tech_comment)}</div>` : ''}
+        <p style="margin-top:16px">Log in to the admin panel to take the next action.</p>
+      `),
+    });
+
+    return ok(res, { message: 'Feedback saved successfully.' });
+  } finally { conn.release(); }
+}
+
+// =============================================================
+// ACTION: my_assignments  (technician or admin)
+// Returns requests assigned to the logged-in technician by name.
+// =============================================================
+async function handleMyAssignments(req, res) {
+  const token = req.headers['x-admin-token'] || req.query.token;
+  if (!token) return err(res, 'Token required.', 401);
+
+  const conn = await db();
+  try {
+    const [tRows] = await conn.execute(
+      `SELECT at.user_id, u.name, u.role
+       FROM admin_tokens at JOIN users u ON u.id = at.user_id
+       WHERE at.token = ? AND at.expires_at > NOW()`,
+      [token]
+    );
+    if (!tRows.length) return err(res, 'Invalid or expired token.', 401);
+    const caller = tRows[0];
+
+    const [rows] = await conn.execute(
+      `SELECT mr.id, mr.request_type, mr.item_name, mr.priority, mr.status,
+              mr.asset_tag, mr.issue_description, mr.notes, mr.photo_path,
+              mr.tech_status, mr.tech_comment, mr.assigned_to, mr.dept_head_signoff,
+              DATE_FORMAT(mr.created_at,'%d %b %Y %H:%i') AS created_at,
+              u.name AS requester_name, u.department, u.floor_office, u.email AS requester_email
+       FROM maintenance_requests mr JOIN users u ON u.id = mr.user_id
+       WHERE mr.assigned_to = ?
+       ORDER BY FIELD(mr.priority,'high','med','low'), mr.created_at DESC`,
+      [caller.name]
+    );
+    return ok(res, { assignments: rows, technician: caller.name });
+  } finally { conn.release(); }
+}
+
+// =============================================================
 // ACTION: delete_request  (admin only)
 // =============================================================
 async function handleDeleteRequest(req, res) {
@@ -1180,6 +1373,8 @@ async function handleExportCSV(req, res) {
               mr.status AS Status, mr.issue_description AS 'Issue',
               mr.asset_tag AS 'Asset Tag', mr.required_by AS 'Required By',
               mr.preferred_date AS 'Preferred Date',
+              mr.assigned_to AS 'Assigned To',
+              mr.dept_head_signoff AS 'Dept Head Sign-off',
               mr.notes AS Notes, mr.admin_notes AS 'Admin Notes',
               mr.created_at AS Submitted
        FROM maintenance_requests mr JOIN users u ON u.id = mr.user_id

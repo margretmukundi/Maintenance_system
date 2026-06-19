@@ -206,7 +206,31 @@ textarea:focus{border-color:#c47a2d;background:#fff}
 .settings-section{margin-bottom:1.5rem}
 .settings-section h4{font-size:.82rem;font-weight:600;color:#1a2f4a;text-transform:uppercase;letter-spacing:.07em;margin-bottom:.75rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)}
 
-/* FILTER BAR */
+/* ASSIGNMENT CARDS */
+.assign-card{background:#fff;border:1px solid #e2ddd6;border-radius:10px;padding:1.1rem 1.2rem;margin-bottom:.85rem;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.assign-card-header{display:flex;align-items:flex-start;justify-content:space-between;gap:.75rem;margin-bottom:.7rem}
+.assign-card-title{font-weight:600;font-size:.95rem;color:#1a2f4a}
+.assign-card-meta{font-size:.72rem;color:#a0a09a;margin-top:.15rem}
+.tech-status-group{display:flex;flex-wrap:wrap;gap:.4rem;margin:.6rem 0}
+.tech-opt{padding:.35rem .9rem;border:1.5px solid #e2ddd6;border-radius:6px;cursor:pointer;font-size:.78rem;font-weight:600;transition:all .12s;background:#fafaf8;user-select:none}
+.tech-opt:hover{transform:translateY(-1px)}
+.tech-opt.opt-inprogress{border-color:#5a4db5;background:#ede8fa;color:#5a4db5}
+.tech-opt.opt-done{border-color:#2d7a4f;background:#e8f5ee;color:#2d7a4f}
+.tech-opt.opt-cannot{border-color:#b03030;background:#fdeaea;color:#b03030}
+.tech-current{display:inline-flex;align-items:center;gap:.3rem;font-size:.75rem;font-weight:600;padding:.25rem .65rem;border-radius:12px}
+.tech-current.in_progress{background:#ede8fa;color:#5a4db5}
+.tech-current.done{background:#e8f5ee;color:#2d7a4f}
+.tech-current.cannot_do{background:#fdeaea;color:#b03030}
+.tech-current.none{background:#f0ede8;color:#a0a09a}
+
+.assign-section{background:#f5f8fc;border:1px solid #d0ddf0;border-radius:8px;padding:.9rem 1rem;margin-top:.75rem}
+.assign-section-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:#2d5a8e;margin-bottom:.65rem;display:flex;align-items:center;gap:.4rem}
+.assign-fields{display:grid;gap:.55rem}
+.assign-badge{display:inline-block;font-size:.7rem;padding:2px 8px;border-radius:12px;font-weight:600;margin-left:.3rem}
+.assign-badge.filled{background:#e8f5ee;color:#2d7a4f}
+.assign-badge.empty{background:#fdf3e3;color:#c47a2d}
+.assign-note{font-size:.72rem;color:#8a99a8;margin-top:.25rem;font-style:italic}
+
 .filter-bar{background:#fff;border:1px solid #e2ddd6;border-radius:10px;padding:.85rem 1rem;margin-bottom:1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:flex-end}
 .filter-bar .field{min-width:140px;flex:1;margin:0}
 .filter-bar .field label{margin-bottom:.25rem}
@@ -219,7 +243,11 @@ textarea:focus{border-color:#c47a2d;background:#fff}
 
 /* ADMIN TABLE */
 .admin-table-wrap{background:#fff;border-radius:10px;border:1px solid #e2ddd6;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,.06)}
-.admin-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.admin-table thead th:last-child,
+.admin-table tbody td:last-child{position:sticky;right:0;background:#fff;box-shadow:-2px 0 6px rgba(0,0,0,.06)}
+.admin-table thead th:last-child{background:#f5f3ef}
+.admin-table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.admin-table{width:100%;border-collapse:collapse;font-size:.82rem;min-width:820px}
 .admin-table th{background:#f5f5f2;font-weight:600;color:#1a2f4a;padding:.65rem .85rem;text-align:left;border-bottom:1px solid #e2ddd6;white-space:nowrap;font-size:.72rem;letter-spacing:.04em;text-transform:uppercase}
 .admin-table td{padding:.7rem .85rem;border-bottom:1px solid #f0ede8;vertical-align:middle}
 .admin-table tr:last-child td{border-bottom:none}
@@ -612,6 +640,7 @@ textarea:focus{border-color:#c47a2d;background:#fff}
       <div class="admin-nav-item"        onclick="adminNav('in_progress',this)"><span class="nav-icon">🔄</span> In Progress</div>
       <div class="admin-nav-item"        onclick="adminNav('completed',this)"><span class="nav-icon">🏁</span> Completed</div>
       <div class="admin-nav-item"        onclick="adminNav('rejected',this)"><span class="nav-icon">❌</span> Rejected</div>
+      <div class="admin-nav-item"        onclick="adminNav('my_assignments',this)"><span class="nav-icon">👷</span> My Assignments <span class="nav-badge" id="navBadgeAssign" style="display:none">0</span></div>
       <div style="flex:1"></div>
       <div class="admin-nav-item"        onclick="adminNav('admin_settings',this)"><span class="nav-icon">⚙️</span> Settings</div>
     </nav>
@@ -672,10 +701,21 @@ textarea:focus{border-color:#c47a2d;background:#fff}
         </div>
         <div class="admin-table-wrap">
           <table class="admin-table">
-            <thead><tr><th>#ID</th><th>Requester</th><th>Item</th><th>Type</th><th>Priority</th><th>Status</th><th>Date</th><th>Actions</th></tr></thead>
-            <tbody id="requestsBody"><tr><td colspan="8" class="empty-state">Loading…</td></tr></tbody>
+            <thead><tr><th>#ID</th><th>Requester</th><th>Item</th><th>Type</th><th>Priority</th><th>Status</th><th>Assigned To</th><th>Date</th><th>Actions</th></tr></thead>
+            <tbody id="requestsBody"><tr><td colspan="9" class="empty-state">Loading…</td></tr></tbody>
           </table>
           <div class="pagination"><span id="paginationInfo"></span><div class="page-btns" id="pageButtons"></div></div>
+        </div>
+      </div>
+
+      <!-- MY ASSIGNMENTS PANEL -->
+      <div id="panel-my-assignments" style="display:none">
+        <div class="section-header" style="display:flex;align-items:center;justify-content:space-between">
+          <h3>👷 My Assignments</h3>
+          <button class="btn-filter" onclick="loadMyAssignments()" style="font-size:.78rem;padding:.35rem .8rem">↻ Refresh</button>
+        </div>
+        <div id="assignmentsList">
+          <div class="empty-state" style="padding:2rem">Loading…</div>
         </div>
       </div>
 
@@ -709,13 +749,57 @@ textarea:focus{border-color:#c47a2d;background:#fff}
 <!-- ADMIN STATUS MODAL -->
 <div class="modal-overlay hidden" id="modalOverlay">
   <div class="modal-box">
-    <div class="modal-header"><h3>Update Request Status</h3><button class="modal-close" onclick="closeModal()">×</button></div>
+    <div class="modal-header"><h3>Update Request</h3><button class="modal-close" onclick="closeModal()">×</button></div>
     <div class="modal-body">
       <div class="detail-grid" id="modalDetails"></div>
       <div id="modalRequesterNotes" style="display:none"></div>
       <div id="modalPhoto" style="display:none"></div>
+
+      <!-- ASSIGNMENT SECTION -->
+      <div class="assign-section">
+        <div class="assign-section-title">
+          👷 Assignment &amp; Authorisation
+          <span class="assign-badge empty" id="assignBadge">Not assigned</span>
+        </div>
+        <div class="assign-fields">
+          <!-- 1. Assigned To -->
+          <div class="field" style="margin:0">
+            <label>① Assigned To <span style="font-weight:400;text-transform:none;color:#a0a09a;font-size:.7rem">(name of person who will action this request)</span></label>
+            <input id="modalAssignedTo" type="text" placeholder="e.g. John Kamau — Facilities Technician" style="font-size:.88rem"/>
+            <div class="assign-note">Type the name manually — this will be emailed to the requester when first assigned.</div>
+          </div>
+          <!-- 2. Dept Head Sign-off -->
+          <div class="field" style="margin:0">
+            <label>② Department Head Sign-off <span style="font-weight:400;text-transform:none;color:#a0a09a;font-size:.7rem">(name of authorising dept head)</span></label>
+            <input id="modalDeptHead" type="text" placeholder="e.g. Mary Otieno — Head of Administration" style="font-size:.88rem"/>
+            <div class="assign-note">Leave blank if not yet authorised. Date is recorded automatically when saved.</div>
+          </div>
+          <!-- 3. Technician Feedback -->
+          <div class="field" style="margin:0;padding-top:.55rem;border-top:1px dashed #c8d8ee">
+            <label>③ Technician Feedback <span style="font-weight:400;text-transform:none;color:#a0a09a;font-size:.7rem">(filled in by the assigned person)</span></label>
+            <div id="techFeedbackCurrent" style="margin-bottom:.45rem"></div>
+            <div class="tech-status-group" id="modalTechGroup">
+              <div class="tech-opt opt-inprogress" onclick="selectModalTech('in_progress',this)">🔄 In Progress</div>
+              <div class="tech-opt opt-done"        onclick="selectModalTech('done',this)">✅ Done</div>
+              <div class="tech-opt opt-cannot"      onclick="selectModalTech('cannot_do',this)">❌ Cannot Do It</div>
+            </div>
+            <textarea id="modalTechComment" placeholder="Comment or reason (required if Cannot Do It)…"
+              style="width:100%;box-sizing:border-box;margin-top:.4rem;min-height:56px;font-size:.83rem;border:1px solid #d8d4ce;border-radius:6px;padding:.5rem .65rem;resize:vertical;font-family:inherit"></textarea>
+            <p class="err-msg"  id="techErr" style="margin-top:.25rem"></p>
+            <p class="ok-msg"   id="techOk"  style="display:none;margin-top:.25rem"></p>
+            <button class="btn-submit btn-rep" id="techFeedbackBtn" onclick="saveModalTechFeedback()"
+              style="margin-top:.45rem;padding:.4rem 1rem;font-size:.8rem">💬 Save Feedback</button>
+          </div>
+        </div>
+        <p class="err-msg" id="assignErr" style="margin-top:.35rem"></p>
+        <p class="ok-msg"  id="assignOk"  style="display:none;margin-top:.35rem"></p>
+        <div style="margin-top:.65rem">
+          <button class="btn-submit btn-rep" style="padding:.45rem 1.1rem;font-size:.83rem;margin:0" id="assignSaveBtn" onclick="saveAssignment()">💾 Save Assignment</button>
+        </div>
+      </div>
+
       <div>
-        <div style="font-size:.75rem;font-weight:500;color:#6b6560;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.45rem">New Status</div>
+        <div style="font-size:.75rem;font-weight:500;color:#6b6560;text-transform:uppercase;letter-spacing:.06em;margin-bottom:.45rem;margin-top:.75rem">Update Status</div>
         <div class="status-select-group">
           <div class="status-opt sel-pending"     onclick="selectStatus('pending',this)">⏳ Pending</div>
           <div class="status-opt sel-approved"    onclick="selectStatus('approved',this)">✅ Approved</div>
@@ -732,7 +816,7 @@ textarea:focus{border-color:#c47a2d;background:#fff}
     </div>
     <div class="modal-footer">
       <button class="btn-action btn-view" style="padding:.5rem 1rem" onclick="closeModal()">Cancel</button>
-      <button class="btn-submit btn-new" style="padding:.5rem 1.2rem;margin:0" id="modalSaveBtn" onclick="saveStatus()">Save &amp; Notify →</button>
+      <button class="btn-submit btn-new" style="padding:.5rem 1.2rem;margin:0" id="modalSaveBtn" onclick="saveStatus()">Save Status &amp; Notify →</button>
     </div>
   </div>
 </div>
@@ -1301,6 +1385,7 @@ function renderHistory(requests) {
     const noteLine = r.notes?`<p style="font-size:.72rem;color:#6b6560;margin-top:.15rem">Notes: ${r.notes}</p>`:'';
     const adminMsg = r.admin_notes?`<div style="margin-top:.35rem;padding:.4rem .6rem;background:#f0f5fb;border-radius:5px;font-size:.72rem;color:#2d5e8e"><strong>Facilities:</strong> ${r.admin_notes}</div>`:'';
     const photoLine= (r.request_type==='repair'&&r.photo_path)?`<div style="margin-top:.3rem"><a href="${r.photo_path}" target="_blank" style="font-size:.72rem;color:#c47a2d">📷 View attached photo</a></div>`:'';
+    const assignLine= r.assigned_to?`<div style="margin-top:.35rem;padding:.4rem .6rem;background:#e8f5ee;border-radius:5px;font-size:.72rem;color:#2d7a4f">👷 <strong>Assigned to:</strong> ${r.assigned_to}${r.dept_head_signoff?` &nbsp;·&nbsp; ✓ <strong>Authorised by:</strong> ${r.dept_head_signoff}`:''}</div>`:'';
     return `<div class="req-row" style="flex-direction:column;gap:.4rem">
       <div style="display:flex;align-items:flex-start;gap:.9rem;width:100%">
         <span class="req-badge ${r.request_type==='new_item'?'new':'rep'}">${r.request_type==='new_item'?'New Item':'Repair'}</span>
@@ -1313,7 +1398,7 @@ function renderHistory(requests) {
           <span style="font-size:.68rem;color:#a0a09a;display:block;margin-top:.3rem">${r.created_at||''}</span>
         </div>
       </div>
-      ${trackBar(r.status)}${adminMsg}${photoLine}
+      ${trackBar(r.status)}${adminMsg}${assignLine}${photoLine}
     </div>`;
   }).join('');
 }
@@ -1406,15 +1491,19 @@ async function logout() {
 function adminNav(section, clickedEl) {
   document.querySelectorAll('.admin-nav-item').forEach(n=>n.classList.remove('active'));
   if (clickedEl) clickedEl.classList.add('active');
-  el('panel-dashboard').style.display      = 'none';
-  el('panel-requests').style.display       = 'none';
-  el('panel-admin-settings').style.display = 'none';
+  el('panel-dashboard').style.display        = 'none';
+  el('panel-requests').style.display         = 'none';
+  el('panel-my-assignments').style.display   = 'none';
+  el('panel-admin-settings').style.display   = 'none';
 
   if (section === 'dashboard') {
     el('panel-dashboard').style.display = 'block';
     loadDashboard();
   } else if (section === 'admin_settings') {
     el('panel-admin-settings').style.display = 'block';
+  } else if (section === 'my_assignments') {
+    el('panel-my-assignments').style.display = 'block';
+    loadMyAssignments();
   } else {
     el('panel-requests').style.display = 'block';
     currentPage = 1;
@@ -1501,7 +1590,7 @@ function applyFilters()   { currentPage=1; loadRequests(); }
 function resetFilters()   { ['f_search','f_type','f_priority','f_dept','f_from','f_to'].forEach(id=>{if(el(id))el(id).value='';}); currentPage=1; loadRequests(); }
 
 async function loadRequests() {
-  el('requestsBody').innerHTML='<tr><td colspan="8" class="empty-state"><span class="spinner spinner-dark"></span> Loading…</td></tr>';
+  el('requestsBody').innerHTML='<tr><td colspan="9" class="empty-state"><span class="spinner spinner-dark"></span> Loading…</td></tr>';
   try {
     const p=new URLSearchParams({action:'all_requests',token:adminToken,page:currentPage,per_page:20});
     if (currentStatusFilter) p.set('status',currentStatusFilter);
@@ -1516,15 +1605,19 @@ async function loadRequests() {
     if (!data.success) throw new Error(data.message);
     renderRequestsTable(data.requests, data.pagination);
   } catch(e) {
-    el('requestsBody').innerHTML=`<tr><td colspan="8" class="empty-state" style="color:#b03030">Error: ${e.message}</td></tr>`;
+    el('requestsBody').innerHTML=`<tr><td colspan="9" class="empty-state" style="color:#b03030">Error: ${e.message}</td></tr>`;
   }
 }
 
+/* Row cache — avoids broken inline JSON in onclick attributes */
+const _rowCache = {};
+
 function renderRequestsTable(rows, pagination) {
   if (!rows.length) {
-    el('requestsBody').innerHTML='<tr><td colspan="8" class="empty-state">No requests found matching your filters.</td></tr>';
+    el('requestsBody').innerHTML='<tr><td colspan="9" class="empty-state">No requests found matching your filters.</td></tr>';
     el('paginationInfo').textContent='0 requests'; el('pageButtons').innerHTML=''; return;
   }
+  rows.forEach(r => { _rowCache[r.id] = r; });
   el('requestsBody').innerHTML = rows.map(r=>`
     <tr>
       <td style="color:#a0a09a;font-weight:500">#${r.id}</td>
@@ -1543,9 +1636,14 @@ function renderRequestsTable(rows, pagination) {
       <td><span class="req-badge ${r.request_type==='new_item'?'new':'rep'}">${r.request_type==='new_item'?'New Item':'Repair'}</span></td>
       <td>${priorityDot(r.priority)}</td>
       <td>${statusBadge(r.status)}</td>
+      <td style="font-size:.78rem;color:${r.assigned_to?'#1a2f4a':'#c0bbb5'}">
+        ${r.assigned_to
+          ? `<div style="font-weight:500">${r.assigned_to}</div>${r.dept_head_signoff?`<div style="font-size:.68rem;color:#2d7a4f;margin-top:.1rem">✓ Sgnd: ${r.dept_head_signoff}</div>`:''}`
+          : '<span style="font-style:italic;font-size:.73rem">—</span>'}
+      </td>
       <td style="font-size:.75rem;color:#a0a09a;white-space:nowrap">${r.created_at}</td>
       <td style="white-space:nowrap">
-        <button class="btn-action btn-view" onclick='openModal(${JSON.stringify(r)})'>✏ Update</button>
+        <button class="btn-action btn-view" onclick="openModalById(${r.id})">✏ Update</button>
         <button class="btn-action btn-delete" onclick="deleteRequest(${r.id})" style="margin-left:4px">🗑</button>
       </td>
     </tr>`).join('');
@@ -1560,6 +1658,8 @@ function renderRequestsTable(rows, pagination) {
 }
 
 function goPage(p) { currentPage=p; loadRequests(); }
+
+function openModalById(id) { openModal(_rowCache[id]); }
 
 /* ── ADMIN MODAL — shows full requester data + photo ── */
 function openModal(req) {
@@ -1580,6 +1680,10 @@ function openModal(req) {
     ['Current Status',req.status],
     ['Submitted',     req.created_at],
     ['Last Updated',  req.updated_at],
+    ['Assigned To',   req.assigned_to||'—'],
+    ['Dept Head Sign-off', req.dept_head_signoff||'—'],
+    ['Technician Status', req.tech_status ? ({in_progress:'🔄 In Progress',done:'✅ Done',cannot_do:'❌ Cannot Do It'}[req.tech_status]) : '—'],
+    ['Technician Comment', req.tech_comment||'—'],
   ];
   el('modalDetails').innerHTML = details.map(([l,val])=>
     `<div class="detail-field">
@@ -1627,12 +1731,50 @@ function openModal(req) {
   }
 
   /* Highlight the current status option */
-  document.querySelectorAll('.status-opt').forEach(opt=>{ opt.style.opacity='.45'; opt.style.fontWeight='500'; });
+  document.querySelectorAll('.status-opt').forEach(opt=>{ opt.style.opacity=''; opt.style.fontWeight=''; opt.style.outline=''; });
   const cur = document.querySelector('.sel-'+req.status);
-  if (cur) { cur.style.opacity='1'; cur.style.fontWeight='700'; }
+  if (cur) { cur.style.outline='2px solid currentColor'; cur.style.fontWeight='700'; }
 
   el('modalNotes').value     = req.admin_notes || '';
   el('modalErr').textContent = '';
+
+  // Assignment fields — populate with current values (never auto-filled)
+  el('modalAssignedTo').value = req.assigned_to || '';
+  el('modalDeptHead').value   = req.dept_head_signoff || '';
+  el('assignErr').textContent = '';
+  el('assignOk').style.display = 'none';
+
+  // Tech feedback — section ③
+  const techLabels = { in_progress:'🔄 In Progress', done:'✅ Done', cannot_do:'❌ Cannot Do It' };
+  const curFeedback = el('techFeedbackCurrent');
+  if (req.tech_status) {
+    const colMap = { in_progress:'#5a4db5', done:'#2d7a4f', cannot_do:'#b03030' };
+    curFeedback.innerHTML = `<span style="font-size:.75rem;font-weight:600;color:${colMap[req.tech_status]}">Current: ${techLabels[req.tech_status]}</span>`;
+  } else {
+    curFeedback.innerHTML = '<span style="font-size:.72rem;color:#a0a09a;font-style:italic">No feedback submitted yet</span>';
+  }
+  el('modalTechComment').value = req.tech_comment || '';
+  el('techErr').textContent = '';
+  el('techOk').style.display = 'none';
+  // Pre-highlight the current tech status button
+  document.querySelectorAll('#modalTechGroup .tech-opt').forEach(o=>{ o.style.outline=''; o.style.fontWeight=''; });
+  if (req.tech_status) {
+    const map = { in_progress:'opt-inprogress', done:'opt-done', cannot_do:'opt-cannot' };
+    const active = document.querySelector('#modalTechGroup .'+map[req.tech_status]);
+    if (active) { active.style.outline='2px solid currentColor'; active.style.fontWeight='700'; }
+  }
+  window._modalTechSel = req.tech_status || null;
+
+  // Update the assignment badge
+  const badge = el('assignBadge');
+  if (req.assigned_to) {
+    badge.textContent = '✓ Assigned';
+    badge.className = 'assign-badge filled';
+  } else {
+    badge.textContent = 'Not assigned';
+    badge.className = 'assign-badge empty';
+  }
+
   el('modalOverlay').classList.remove('hidden');
 }
 
@@ -1643,8 +1785,8 @@ function closeModal() {
 
 function selectStatus(s, btn) {
   modalSelStatus = s;
-  document.querySelectorAll('.status-opt').forEach(o=>{ o.style.opacity='.45'; o.style.fontWeight='500'; });
-  btn.style.opacity='1'; btn.style.fontWeight='700';
+  document.querySelectorAll('.status-opt').forEach(o=>{ o.style.outline=''; o.style.fontWeight=''; });
+  btn.style.outline='2px solid currentColor'; btn.style.fontWeight='700';
 }
 
 async function saveStatus() {
@@ -1667,7 +1809,184 @@ async function saveStatus() {
   finally { btn.innerHTML='Save &amp; Notify →'; btn.disabled=false; }
 }
 
-/* ── DELETE + EXPORT ── */
+/* ── ADMIN ASSIGNMENT ── */
+async function saveAssignment() {
+  const assigned_to       = el('modalAssignedTo').value.trim();
+  const dept_head_signoff = el('modalDeptHead').value.trim();
+  const errEl = el('assignErr'), okEl = el('assignOk'), btn = el('assignSaveBtn');
+  errEl.textContent = ''; okEl.style.display = 'none';
+
+  btn.innerHTML='<span class="spinner"></span>Saving…'; btn.disabled=true;
+  try {
+    const res = await fetch(API_BASE+'?action=assign_technician', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Admin-Token': adminToken },
+      body: JSON.stringify({ request_id: modalRequestId, assigned_to, dept_head_signoff }),
+    });
+    const data = await res.json();
+    if (!data.success) { errEl.textContent = data.message || 'Failed to save.'; return; }
+
+    // Update badge in the modal
+    const badge = el('assignBadge');
+    if (assigned_to) { badge.textContent='✓ Assigned'; badge.className='assign-badge filled'; }
+    else             { badge.textContent='Not assigned'; badge.className='assign-badge empty'; }
+
+    okEl.textContent = '✓ Assignment saved.'; okEl.style.display = 'block';
+    setTimeout(()=>{ okEl.style.display='none'; }, 3000);
+    showToast(`Assignment saved for request #${modalRequestId}`, 'success');
+    loadRequests(); // refresh table
+  } catch(e) { errEl.textContent = 'Connection error. Please try again.'; }
+  finally { btn.innerHTML='💾 Save Assignment'; btn.disabled=false; }
+}
+
+function selectModalTech(status, btn) {
+  window._modalTechSel = status;
+  document.querySelectorAll('#modalTechGroup .tech-opt').forEach(o=>{ o.style.outline=''; o.style.fontWeight=''; });
+  btn.style.outline='2px solid currentColor'; btn.style.fontWeight='700';
+}
+
+async function saveModalTechFeedback() {
+  const tech_status  = window._modalTechSel;
+  const tech_comment = (el('modalTechComment')?.value||'').trim();
+  const errEl = el('techErr'), okEl = el('techOk'), btn = el('techFeedbackBtn');
+  errEl.textContent = ''; okEl.style.display = 'none';
+
+  if (!tech_status) { errEl.textContent = 'Please select a job status first.'; return; }
+  if (tech_status === 'cannot_do' && !tech_comment) {
+    errEl.textContent = 'Please add a reason when selecting "Cannot Do It".'; return;
+  }
+
+  btn.innerHTML='<span class="spinner"></span>Saving…'; btn.disabled=true;
+  try {
+    const res  = await fetch(API_BASE+'?action=technician_feedback', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Admin-Token':adminToken},
+      body: JSON.stringify({ request_id: modalRequestId, tech_status, tech_comment }),
+    });
+    const data = await res.json();
+    if (!data.success) { errEl.textContent = data.message||'Failed to save.'; return; }
+
+    const techLabels = { in_progress:'🔄 In Progress', done:'✅ Done', cannot_do:'❌ Cannot Do It' };
+    const colMap = { in_progress:'#5a4db5', done:'#2d7a4f', cannot_do:'#b03030' };
+    el('techFeedbackCurrent').innerHTML = `<span style="font-size:.75rem;font-weight:600;color:${colMap[tech_status]}">Current: ${techLabels[tech_status]}</span>`;
+    okEl.textContent = '✓ Feedback saved.'; okEl.style.display = 'block';
+    setTimeout(()=>{ okEl.style.display='none'; }, 3000);
+    showToast(`Technician feedback saved for #${modalRequestId}`, 'success');
+    loadRequests();
+  } catch(e) { errEl.textContent = 'Connection error. Please try again.'; }
+  finally { btn.innerHTML='💬 Save Feedback'; btn.disabled=false; }
+}
+
+
+/* ── MY ASSIGNMENTS ── */
+async function loadMyAssignments() {
+  el('assignmentsList').innerHTML = '<div class="empty-state" style="padding:2rem"><span class="spinner spinner-dark"></span> Loading…</div>';
+  try {
+    const res  = await fetch(`${API_BASE}?action=my_assignments&token=${adminToken}`);
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+    renderMyAssignments(data.requests || []);
+    const badge = el('navBadgeAssign');
+    const pending = (data.requests||[]).filter(r=>!r.tech_status).length;
+    if (pending > 0) { badge.textContent=pending; badge.style.display='inline-block'; }
+    else             { badge.style.display='none'; }
+  } catch(e) {
+    el('assignmentsList').innerHTML = `<div class="empty-state" style="color:#b03030;padding:2rem">Error: ${e.message}</div>`;
+  }
+}
+
+function renderMyAssignments(rows) {
+  if (!rows.length) {
+    el('assignmentsList').innerHTML = '<div class="empty-state" style="padding:2.5rem;text-align:center">No requests are currently assigned to you.</div>';
+    return;
+  }
+  const techLabel = { in_progress:'🔄 In Progress', done:'✅ Done', cannot_do:'❌ Cannot Do It' };
+  el('assignmentsList').innerHTML = rows.map(r => {
+    const currentBadge = r.tech_status
+      ? `<span class="tech-current ${r.tech_status}">${techLabel[r.tech_status]}</span>`
+      : `<span class="tech-current none">⏳ No feedback yet</span>`;
+    return `
+    <div class="assign-card" id="acard-${r.id}">
+      <div class="assign-card-header">
+        <div>
+          <div class="assign-card-title">#${r.id} — ${r.item_name}</div>
+          <div class="assign-card-meta">${r.requester_name} · ${r.department} · ${r.floor_office||''}</div>
+          <div class="assign-card-meta" style="margin-top:.2rem">${statusBadge(r.status)} &nbsp; ${priorityDot(r.priority)} &nbsp; Submitted ${r.created_at}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">${currentBadge}</div>
+      </div>
+      ${r.issue_description||r.notes ? `
+        <div style="background:#f8f7f4;border-radius:6px;padding:.5rem .7rem;font-size:.78rem;color:#4a4540;margin-bottom:.65rem">
+          <strong>${r.issue_description?'Issue:':'Note:'}</strong> ${r.issue_description||r.notes}
+        </div>` : ''}
+      ${r.tech_comment ? `
+        <div style="background:#fffbf0;border:1px solid #f0e0b0;border-radius:6px;padding:.5rem .7rem;font-size:.78rem;color:#7a5a10;margin-bottom:.65rem">
+          <strong>Your last comment:</strong> ${r.tech_comment}
+        </div>` : ''}
+      <div style="border-top:1px solid #f0ede8;padding-top:.7rem;margin-top:.2rem">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6b6560;margin-bottom:.4rem">Update your job status</div>
+        <div class="tech-status-group" id="tsg-${r.id}">
+          <div class="tech-opt opt-inprogress" onclick="selectTech(${r.id},'in_progress',this)">🔄 In Progress</div>
+          <div class="tech-opt opt-done"        onclick="selectTech(${r.id},'done',this)">✅ Done</div>
+          <div class="tech-opt opt-cannot"      onclick="selectTech(${r.id},'cannot_do',this)">❌ Cannot Do It</div>
+        </div>
+        <textarea id="tcomment-${r.id}" placeholder="Add a comment or reason (required if Cannot Do It)…"
+          style="width:100%;box-sizing:border-box;margin-top:.4rem;min-height:64px;font-size:.83rem;border:1px solid #d8d4ce;border-radius:6px;padding:.5rem .65rem;resize:vertical;font-family:inherit">${r.tech_comment||''}</textarea>
+        <p class="err-msg" id="terr-${r.id}" style="margin-top:.25rem"></p>
+        <button class="btn-submit btn-rep" id="tbtn-${r.id}" onclick="saveTechFeedback(${r.id})"
+          style="margin-top:.5rem;padding:.45rem 1.1rem;font-size:.83rem">💾 Submit Feedback</button>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Highlight current tech_status on each card
+  rows.forEach(r => {
+    if (!r.tech_status) return;
+    const group = document.getElementById('tsg-'+r.id);
+    if (!group) return;
+    const map = { in_progress:'opt-inprogress', done:'opt-done', cannot_do:'opt-cannot' };
+    const active = group.querySelector('.'+map[r.tech_status]);
+    if (active) { active.style.outline='2px solid currentColor'; active.style.fontWeight='700'; }
+    _techSel[r.id] = r.tech_status;
+  });
+}
+
+const _techSel = {};
+
+function selectTech(id, status, btn) {
+  _techSel[id] = status;
+  const group = document.getElementById('tsg-'+id);
+  group.querySelectorAll('.tech-opt').forEach(o=>{ o.style.outline=''; o.style.fontWeight=''; });
+  btn.style.outline='2px solid currentColor'; btn.style.fontWeight='700';
+}
+
+async function saveTechFeedback(id) {
+  const tech_status  = _techSel[id];
+  const tech_comment = (document.getElementById('tcomment-'+id)?.value||'').trim();
+  const errEl = document.getElementById('terr-'+id);
+  const btn   = document.getElementById('tbtn-'+id);
+  errEl.textContent = '';
+
+  if (!tech_status) { errEl.textContent = 'Please select a job status first.'; return; }
+  if (tech_status === 'cannot_do' && !tech_comment) {
+    errEl.textContent = 'Please add a reason when selecting "Cannot Do It".'; return;
+  }
+
+  btn.innerHTML='<span class="spinner"></span>Saving…'; btn.disabled=true;
+  try {
+    const res  = await fetch(API_BASE+'?action=technician_feedback', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','X-Admin-Token':adminToken},
+      body: JSON.stringify({ request_id: id, tech_status, tech_comment }),
+    });
+    const data = await res.json();
+    if (!data.success) { errEl.textContent = data.message||'Failed to save.'; return; }
+    showToast(`Feedback for #${id} saved.`, 'success');
+    loadMyAssignments();
+  } catch(e) { errEl.textContent = 'Connection error. Please try again.'; }
+  finally { btn.innerHTML='💾 Submit Feedback'; btn.disabled=false; }
+}
+
 async function deleteRequest(id) {
   if (!confirm(`Delete request #${id}? This cannot be undone.`)) return;
   try {
