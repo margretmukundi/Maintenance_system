@@ -1427,7 +1427,7 @@ async function start() {
   function tryListen(port, attempts = 3) {
     const server = app.listen(port, () => {
       console.log(`✅ Server running at: http://localhost:${port}`);
-      console.log(`   Admin login:       admin@organisation.com`);
+      console.log(`   Admin login:       admin@bunge.com`);
       console.log('========================================\n');
     });
 
